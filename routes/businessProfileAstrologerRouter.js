@@ -72,49 +72,49 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
 });
 
 // update API
-businessProfileRoute.put("/update-astro-status-by-mobile/:mobileNumber", async (req, res, next) => {
-  try {
-    const { mobileNumber } = req.params;
-    const { profileStatus, chatStatus } = req.body;
+businessProfileRoute.put(
+  "/update-astro-status-by-mobile/:mobileNumber",
+  async (req, res, next) => {
+    try {
+      const { mobileNumber } = req.params;
+      const { profileStatus, chatStatus } = req.body;
 
-    if (profileStatus === undefined && chatStatus === undefined) {
-      return res.status(400).json({
-        error: "At least one of profileStatus or chatStatus is required",
+      if (profileStatus === undefined && chatStatus === undefined) {
+        return res
+          .status(400)
+          .json({ error: "profileStatus or chatStatus is required" });
+      }
+
+      let updateFields = {};
+
+      if (profileStatus !== undefined) {
+        updateFields.profileStatus =
+          profileStatus === true || profileStatus === "true";
+      }
+
+      if (chatStatus !== undefined) {
+        updateFields.chatStatus = chatStatus === true || chatStatus === "true";
+      }
+
+      const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
+        { mobileNumber },
+        { $set: updateFields },
+        { new: true }
+      );
+
+      if (!updatedProfile) {
+        return res.status(404).json({ error: "Astrologer not found" });
+      }
+
+      res.status(200).json({
+        message: "Success",
+        updatedProfile: updatedProfile,
       });
+    } catch (error) {
+      next(error);
     }
-
-    // Build the fields to update
-    const updateFields = {};
-    console.log("updateFields",updateFields);
-    
-    if (profileStatus !== undefined) {
-      updateFields.profileStatus = profileStatus === true || profileStatus === "true";
-    }
-    if (chatStatus !== undefined) {
-      updateFields.chatStatus = chatStatus === true || chatStatus === "true";
-    }
-    const existingProfile = await businessProfileAstrologer.findOne({ mobileNumber });
-    console.log("Existing Profile:", existingProfile);
-    
-    const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
-      { mobileNumber },
-      { $set: updateFields },
-      { new: true }
-    );
-
-    if (!updatedProfile) {
-      return res.status(404).json({ error: "Astrologer not found" });
-    }
-
-    res.status(200).json({
-      message: "Astrologer status updated successfully",
-      updatedProfile,
-    });
-  } catch (error) {
-    console.error("Update error:", error);
-    next(error);
   }
-});
+);
 
 businessProfileRoute.post(
   "/astrologer-businessProfile",
@@ -176,7 +176,8 @@ businessProfileRoute.post(
         .status(201)
         .json({ message: "success", BusinessProfileData: newBusinessProfile });
     } catch (error) {
-      res.status(500).json({ error: "Failed to add businessProfile" });
+      console.error("Error occurred while saving business profile:", error);
+      res.status(500).json({ error: "Internal Server Error", message: error.message });
     }
   }
 );
