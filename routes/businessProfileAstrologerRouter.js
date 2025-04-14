@@ -144,7 +144,7 @@ businessProfileRoute.post(
         !Description ||
         
         !mobileNumber ||
-        !req.file ||
+        // !req.file ||
         !profileStatus === undefined ||
         !chatStatus === undefined
       ) {

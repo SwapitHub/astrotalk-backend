@@ -9,7 +9,7 @@ const businessProfileAstrologerSchema = new mongoose.Schema({
   Description : String,
   minute : {type: String, required: false},
   mobileNumber: String,
-  profileImage: String,
+  profileImage: {type: String, required: false},
   profileStatus: Boolean,
   chatStatus: Boolean
 });
