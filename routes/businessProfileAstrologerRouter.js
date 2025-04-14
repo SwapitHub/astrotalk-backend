@@ -128,7 +128,6 @@ businessProfileRoute.post(
         experience,
         charges,
         Description,
-       
         mobileNumber,
         profileStatus,
         chatStatus,
@@ -142,11 +141,10 @@ businessProfileRoute.post(
         !experience ||
         !charges ||
         !Description ||
-        
         !mobileNumber ||
         !req.file ||
-        !profileStatus === undefined ||
-        !chatStatus === undefined
+        profileStatus === undefined ||
+        chatStatus === undefined
       ) {
         return res
           .status(400)
@@ -163,7 +161,6 @@ businessProfileRoute.post(
         experience,
         charges,
         Description,
-       
         mobileNumber,
         profileImage: imageName,
         profileStatus,
@@ -176,10 +173,14 @@ businessProfileRoute.post(
         .status(201)
         .json({ message: "success", BusinessProfileData: newBusinessProfile });
     } catch (error) {
-      console.error("Error occurred while saving business profile:", error);
-      res.status(500).json({ error: "Internal Server Error", message: error.message });
+      console.error("Error adding businessProfile:", error);
+      res.status(500).json({ 
+        error: "Failed to add businessProfile", 
+        details: error.message 
+      });
     }
   }
 );
+
 
 module.exports = { businessProfileRoute };
