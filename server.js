@@ -27,7 +27,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     // origin: ["http://localhost:3000", "http://localhost:3001"],
-    origin: ["https://astrotalk-backend.onrender.com"],
+    origin: ["https://astrotalk-front-end-kit9.vercel.app"],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -40,11 +40,11 @@ app.use(cors());
 
 // mongo db connection
 
-connectMongoDb("mongodb://localhost:27017/chatting");
+// connectMongoDb("mongodb://localhost:27017/chatting");
 
-// connectMongoDb(
-//   "mongodb+srv://swapitshamsher:Eb25QUq9aEt27aSQ@astrologer.euynurr.mongodb.net/astrotalk?retryWrites=true&w=majority&appName=astrologer"
-// );
+connectMongoDb(
+  "mongodb+srv://swapitshamsher:Eb25QUq9aEt27aSQ@astrologer.euynurr.mongodb.net/astrotalk?retryWrites=true&w=majority&appName=astrologer"
+);
 
 // user connect chatting socket.io
 socketIoMessageMain(io);
