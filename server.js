@@ -27,7 +27,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     // origin: ["http://localhost:3000", "http://localhost:3001"],
-    origin: ["https://astrotalk-front-end-kit9.vercel.app"],
+    origin: ["https://astrotalk-front-end-s6af.vercel.app/"],
     methods: ["GET", "POST"],
     credentials: true,
   },
