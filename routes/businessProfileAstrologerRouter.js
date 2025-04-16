@@ -2,33 +2,31 @@ const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 const businessProfileAstrologer = require("../models/businessProfileAstrologerModel");
 const businessProfileRoute = express.Router();
 
 // multer for image upload start here
-businessProfileRoute.use(
-  "/images",
-  express.static(path.join(__dirname, "../public/images"))
-);
+// businessProfileRoute.use(
+//   "/images",
+//   express.static(path.join(__dirname, "../public/images"))
+// );
+const uploadPath = path.join(__dirname, "../uploads");
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
+}
+businessProfileRoute.use("/uploads", express.static(uploadPath));
 
 // Multer storage configuration
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "../public/images");
-    cb(null, uploadPath);
-  },
+  destination: (req, file, cb) => cb(null, uploadPath),
   filename: (req, file, cb) => {
-    // Extract the original file name (e.g., "SAMA.png")
-    const originalName = path.parse(file.originalname).name; // Get the name without extension
-    const extension = path.parse(file.originalname).ext; // Get the file extension
-    // Generate a unique file name: timestamp + random number + original name + extension
-    const uniqueSuffix = `${Date.now()}-${Math.round(
-      Math.random() * 1e9
-    )}-${originalName}${extension}`;
+    const originalName = path.parse(file.originalname).name;
+    const extension = path.parse(file.originalname).ext;
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${originalName}${extension}`;
     cb(null, uniqueSuffix);
   },
 });
-
 const upload = multer({ storage });
 
 // multer for image upload End here
@@ -128,34 +126,20 @@ businessProfileRoute.post(
         experience,
         charges,
         Description,
-       
         mobileNumber,
         profileStatus,
         chatStatus,
       } = req.body;
 
-      // Check if all required fields are provided
       if (
-        !name ||
-        !profession ||
-        !languages ||
-        !experience ||
-        !charges ||
-        !Description ||
-        
-        !mobileNumber ||
-        !req.file ||
-        !profileStatus === undefined ||
-        !chatStatus === undefined
+        !name || !profession || !languages || !experience || !charges || !Description ||
+        !mobileNumber || !req.file || profileStatus === undefined || chatStatus === undefined
       ) {
-        return res
-          .status(400)
-          .json({ error: "All fields including the image are required" });
+        return res.status(400).json({ error: "All fields including the image are required" });
       }
 
-      const imageName = `${process.env.API_BASE_URL}/images/${req.file.filename}`;
+      const imageName = `${process.env.API_BASE_URL}/uploads/${req.file.filename}`;
 
-      // Save the business profile data with the image name
       const newBusinessProfile = new businessProfileAstrologer({
         name,
         profession,
@@ -163,7 +147,6 @@ businessProfileRoute.post(
         experience,
         charges,
         Description,
-       
         mobileNumber,
         profileImage: imageName,
         profileStatus,
@@ -172,10 +155,12 @@ businessProfileRoute.post(
 
       await newBusinessProfile.save();
 
-      res
-        .status(201)
-        .json({ message: "success", BusinessProfileData: newBusinessProfile });
+      res.status(201).json({
+        message: "success",
+        BusinessProfileData: newBusinessProfile,
+      });
     } catch (error) {
+      console.error("Upload error:", error);
       res.status(500).json({ error: "Failed to add businessProfile" });
     }
   }
