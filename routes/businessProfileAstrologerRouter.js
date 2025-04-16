@@ -153,7 +153,7 @@ businessProfileRoute.post(
           .json({ error: "All fields including the image are required" });
       }
 
-      const imageName = req.file.filename;
+      const imageName = `${process.env.API_BASE_URL}/images/${req.file.filename}`;
 
       // Save the business profile data with the image name
       const newBusinessProfile = new businessProfileAstrologer({
