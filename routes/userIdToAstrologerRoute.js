@@ -100,7 +100,13 @@ async function socketUserIdToAstrologerMsg(io) {
 
     // Handle userId and astrologerId submission
     socket.on("userId-to-astrologer", async (messageId) => {
+      console.log("Received messageId:", messageId); 
+  
       try {
+        if (!messageId) {
+          throw new Error("messageId object is undefined");
+        }
+
         const {
           userIdToAst,
           astrologerIdToAst,
@@ -116,6 +122,21 @@ async function socketUserIdToAstrologerMsg(io) {
           DeleteOrderHistoryStatus,
           chatStatus,
         } = messageId;
+
+        console.log("Extracted values:", {
+          userIdToAst,
+          astrologerIdToAst,
+          mobileNumber,
+          profileImage,
+          astroName,
+          astroCharges,
+          astroExperience
+        });
+        if (!userIdToAst || !astrologerIdToAst) {
+          throw new Error(
+            `Required fields missing. userIdToAst: ${userIdToAst}, astrologerIdToAst: ${astrologerIdToAst}`
+          );
+        }
 
         if (
           !userIdToAst ||
