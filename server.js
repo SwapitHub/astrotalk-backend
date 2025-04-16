@@ -27,7 +27,7 @@ const app = express();
 const server = http.createServer(app);
 // Enhanced CORS configuration
 const allowedOrigins = [
-  'https://astrotalk-front-end-s6af.vercel.app',
+  'https://astrotalk-front-end-bkrt.vercel.app',
   'https://astrotalk-backend.onrender.com'
 ];
 
