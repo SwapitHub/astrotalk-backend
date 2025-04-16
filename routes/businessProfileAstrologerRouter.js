@@ -8,13 +8,13 @@ const businessProfileRoute = express.Router();
 // multer for image upload start here
 businessProfileRoute.use(
   "/images",
-  express.static(path.join(__dirname, "../../frontend/public/images"))
+  express.static(path.join(__dirname, "../public/images"))
 );
 
 // Multer storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "../../frontend/public/images");
+    const uploadPath = path.join(__dirname, "../public/images");
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
@@ -118,6 +118,7 @@ businessProfileRoute.put(
 
 businessProfileRoute.post(
   "/astrologer-businessProfile",
+  upload.single("image"),
   async (req, res) => {
     try {
       const {
@@ -127,6 +128,7 @@ businessProfileRoute.post(
         experience,
         charges,
         Description,
+       
         mobileNumber,
         profileStatus,
         chatStatus,
@@ -140,15 +142,20 @@ businessProfileRoute.post(
         !experience ||
         !charges ||
         !Description ||
+        
         !mobileNumber ||
-        profileStatus === undefined ||
-        chatStatus === undefined
+        !req.file ||
+        !profileStatus === undefined ||
+        !chatStatus === undefined
       ) {
         return res
           .status(400)
-          .json({ error: "All fields are required" });
+          .json({ error: "All fields including the image are required" });
       }
 
+      const imageName = req.file.filename;
+
+      // Save the business profile data with the image name
       const newBusinessProfile = new businessProfileAstrologer({
         name,
         profession,
@@ -156,17 +163,18 @@ businessProfileRoute.post(
         experience,
         charges,
         Description,
+       
         mobileNumber,
+        profileImage: imageName,
         profileStatus,
         chatStatus,
       });
 
       await newBusinessProfile.save();
 
-      res.status(201).json({
-        message: "success",
-        BusinessProfileData: newBusinessProfile,
-      });
+      res
+        .status(201)
+        .json({ message: "success", BusinessProfileData: newBusinessProfile });
     } catch (error) {
       res.status(500).json({ error: "Failed to add businessProfile" });
     }
