@@ -80,7 +80,6 @@ connectMongoDb(
 );
 app.use(express.json());
 // user connect chatting socket.io
-socketIoMessageMain(io);
 
 // routes
 app.use("/chat", userRouter);
@@ -94,9 +93,9 @@ app.use("/", razorpayRouter);
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);
+socketIoMessageMain(io);
 
 socketUserIdToAstrologerMsg(io);
-socketIoMessageMain(io);
 
 server.listen(PORT, () =>
   console.log(`Server running on http://localhost:${PORT}`)
