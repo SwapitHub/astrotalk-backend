@@ -2,34 +2,40 @@ const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 const businessProfileAstrologer = require("../models/businessProfileAstrologerModel");
 const businessProfileRoute = express.Router();
 
 // multer for image upload start here
-businessProfileRoute.use(
-  "/images",
-  express.static(path.join(__dirname, "../public/images"))
-);
+// businessProfileRoute.use(
+//   "/images",
+//   express.static(path.join(__dirname, "../public/images"))
+// );
+const uploadDir = path.join(process.cwd(), "uploads");
 
-// Multer storage configuration
+// ✅ Ensure the directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// ✅ Serve images
+businessProfileRoute.use("/uploads", express.static(uploadDir));
+
+// ✅ Multer setup
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "../public/images");
-    cb(null, uploadPath);
-  },
+  destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
-    // Extract the original file name (e.g., "SAMA.png")
-    const originalName = path.parse(file.originalname).name; // Get the name without extension
-    const extension = path.parse(file.originalname).ext; // Get the file extension
-    // Generate a unique file name: timestamp + random number + original name + extension
-    const uniqueSuffix = `${Date.now()}-${Math.round(
-      Math.random() * 1e9
-    )}-${originalName}${extension}`;
-    cb(null, uniqueSuffix);
+    const originalName = path.parse(file.originalname).name;
+    const extension = path.parse(file.originalname).ext;
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${originalName}${extension}`;
+    cb(null, uniqueName);
   },
 });
-
 const upload = multer({ storage });
+
+businessProfileRoute.get("/uploads-test", (req, res) => {
+  res.json({ path: uploadDir });
+});
 
 // multer for image upload End here
 
@@ -128,13 +134,12 @@ businessProfileRoute.post(
         experience,
         charges,
         Description,
-       
         mobileNumber,
         profileStatus,
         chatStatus,
       } = req.body;
 
-      // Check if all required fields are provided
+      // Validation
       if (
         !name ||
         !profession ||
@@ -142,20 +147,19 @@ businessProfileRoute.post(
         !experience ||
         !charges ||
         !Description ||
-        
         !mobileNumber ||
         !req.file ||
-        !profileStatus === undefined ||
-        !chatStatus === undefined
+        profileStatus === undefined ||
+        chatStatus === undefined
       ) {
         return res
           .status(400)
           .json({ error: "All fields including the image are required" });
       }
 
-      const imageName = req.file.filename;
+      // Construct the full image URL
+      const imageURL = `/uploads/${req.file.filename}`;
 
-      // Save the business profile data with the image name
       const newBusinessProfile = new businessProfileAstrologer({
         name,
         profession,
@@ -163,19 +167,20 @@ businessProfileRoute.post(
         experience,
         charges,
         Description,
-       
         mobileNumber,
-        profileImage: imageName,
+        profileImage: imageURL,
         profileStatus,
         chatStatus,
       });
 
       await newBusinessProfile.save();
 
-      res
-        .status(201)
-        .json({ message: "success", BusinessProfileData: newBusinessProfile });
+      res.status(201).json({
+        message: "success",
+        BusinessProfileData: newBusinessProfile,
+      });
     } catch (error) {
+      console.error("Error uploading business profile:", error);
       res.status(500).json({ error: "Failed to add businessProfile" });
     }
   }
