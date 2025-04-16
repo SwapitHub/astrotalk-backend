@@ -4,7 +4,7 @@ const userIdSendToAstrologerSchema = new mongoose.Schema({
     userIdToAst: String,
     astrologerIdToAst: String,
     mobileNumber: String,
-    profileImage: String,
+    // profileImage: String,
     astroName: String,
     astroCharges: String,
     astroExperience: String,
