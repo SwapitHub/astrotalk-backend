@@ -16,10 +16,10 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Serve uploaded images
+// Serve static files from 'uploads' directory
 businessProfileRoute.use("/uploads", express.static(uploadDir));
 
-// Multer config
+// Multer configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
@@ -133,15 +133,26 @@ businessProfileRoute.post(
         chatStatus,
       } = req.body;
 
+      // Validation
       if (
-        !name || !profession || !languages || !experience || !charges || !Description ||
-        !mobileNumber || !req.file || profileStatus === undefined || chatStatus === undefined
+        !name ||
+        !profession ||
+        !languages ||
+        !experience ||
+        !charges ||
+        !Description ||
+        !mobileNumber ||
+        !req.file ||
+        profileStatus === undefined ||
+        chatStatus === undefined
       ) {
-        return res.status(400).json({ error: "All fields including the image are required" });
+        return res
+          .status(400)
+          .json({ error: "All fields including the image are required" });
       }
 
-      // Build image URL
-      const imageURL = req.file.filename;
+      // Construct the full image URL
+      const imageURL = `/uploads/${req.file.filename}`;
 
       const newBusinessProfile = new businessProfileAstrologer({
         name,
