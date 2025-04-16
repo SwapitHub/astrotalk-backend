@@ -87,10 +87,11 @@ userIdAstRoute.get("/get-userId-to-astrologer", async (req, res) => {
 
 async function socketUserIdToAstrologerMsg(io) {
   io.on("connection", (socket) => {
-    console.log("🔌 A user connected:", socket.id);
+    console.log("✅ Socket connected:", socket.id);
 
     socket.on("astrologer-chat-status", async (astrologerData) => {
-      console.log("🔔 astrologerData", astrologerData);
+      console.log("🔔 astrologer-chat-status:", astrologerData);
+
       io.emit("astrologer-data-received-new-notification", {
         message: "You have a new chat request!",
         astrologerData,
@@ -98,24 +99,47 @@ async function socketUserIdToAstrologerMsg(io) {
     });
 
     socket.on("userId-to-astrologer", async (messageId) => {
+      console.log("📩 Received messageId:", messageId);
+
       try {
-        console.log("📩 Received messageId:", messageId);
-        if (!messageId) throw new Error("messageId object is undefined");
+        if (!messageId) throw new Error("messageId is undefined");
 
         const {
-          userIdToAst, astrologerIdToAst, mobileNumber,
-          profileImage, astroName, astroCharges,
-          astroExperience, chatId, chatType,
-          chatDuration, chatDeduction,
-          DeleteOrderHistoryStatus, chatStatus
+          userIdToAst,
+          astrologerIdToAst,
+          mobileNumber,
+          profileImage,
+          astroName,
+          astroCharges,
+          astroExperience,
+          chatId,
+          chatType,
+          chatDuration,
+          chatDeduction,
+          DeleteOrderHistoryStatus,
+          chatStatus,
         } = messageId;
 
-        // Validate required fields
-        if (!userIdToAst || !astrologerIdToAst || !mobileNumber || !profileImage ||
-            !astroName || !astroCharges || !astroExperience) {
-          throw new Error("Required fields are missing.");
+        // 🚨 Field validation
+        const requiredFields = {
+          userIdToAst,
+          astrologerIdToAst,
+          mobileNumber,
+          profileImage,
+          astroName,
+          astroCharges,
+          astroExperience,
+        };
+
+        const missingFields = Object.entries(requiredFields)
+          .filter(([_, val]) => !val)
+          .map(([key]) => key);
+
+        if (missingFields.length > 0) {
+          throw new Error(`Required fields are missing: ${missingFields.join(", ")}`);
         }
 
+        // ✅ Save to DB
         const newUserIdToAst = new userIdSendToAstrologer({
           userIdToAst,
           astrologerIdToAst,
@@ -134,13 +158,13 @@ async function socketUserIdToAstrologerMsg(io) {
 
         await newUserIdToAst.save();
 
-        // Respond to sender
+        // ✅ Acknowledge success
         socket.emit("userId-to-astrologer-success", {
           message: "success",
           userIdsSendToAstrologer: newUserIdToAst,
         });
 
-        // Notify astrologers
+        // 🔔 Notify all astrologers
         io.emit("new-notification", {
           message: "You have a new chat request!",
           userId: userIdToAst,
@@ -148,17 +172,18 @@ async function socketUserIdToAstrologerMsg(io) {
           mobileNumber,
         });
 
-        console.log(`📨 Notification sent for ${userIdToAst} → ${astrologerIdToAst}`);
+        console.log(`✅ Notification emitted for chat: ${userIdToAst} ➡️ ${astrologerIdToAst}`);
       } catch (error) {
         console.error("❌ Error saving userId and astrologerId:", error.message);
         socket.emit("userId-to-astrologer-error", {
-          error: error.message || "Failed to save userId and astrologerId",
+          error: error.message,
+          receivedData: messageId,
         });
       }
     });
 
     socket.on("disconnect", () => {
-      console.log("🔌 A user disconnected:", socket.id);
+      console.log("❌ Socket disconnected:", socket.id);
     });
   });
 }
