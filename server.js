@@ -25,7 +25,7 @@ const { razorpayRouter } = require("./routes/razorpayRouter");
 const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
-  `https://astrotals.netlify.app`
+  "https://astrotals.netlify.app"
   // "http://localhost:3000"
 ];
 
@@ -76,7 +76,7 @@ app.use(cors());
 // connectMongoDb("mongodb://localhost:27017/chatting");
 
 connectMongoDb(
-  `${process.env.MONGODB_BASE_URL}`
+  "mongodb+srv://swapitshamsher:Eb25QUq9aEt27aSQ@astrologer.euynurr.mongodb.net/astrotalk?retryWrites=true&w=majority&appName=astrologer"
 );
 app.use(express.json());
 // user connect chatting socket.io
