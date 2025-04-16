@@ -11,15 +11,17 @@ const businessProfileRoute = express.Router();
 //   "/images",
 //   express.static(path.join(__dirname, "../public/images"))
 // );
-const uploadDir = path.join(__dirname, "../uploads");
+const uploadDir = path.join(process.cwd(), "uploads");
+
+// ✅ Ensure the directory exists
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Serve static files from 'uploads' directory
+// ✅ Serve images
 businessProfileRoute.use("/uploads", express.static(uploadDir));
 
-// Multer configuration
+// ✅ Multer setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
@@ -30,6 +32,10 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage });
+
+businessProfileRoute.get("/uploads-test", (req, res) => {
+  res.json({ path: uploadDir });
+});
 
 // multer for image upload End here
 
