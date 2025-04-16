@@ -141,7 +141,7 @@ businessProfileRoute.post(
       }
 
       // Build image URL
-      const imageURL = `${process.env.API_BASE_URL}/uploads/${req.file.filename}`;
+      const imageURL = req.file.filename;
 
       const newBusinessProfile = new businessProfileAstrologer({
         name,
