@@ -11,20 +11,22 @@ const businessProfileRoute = express.Router();
 //   "/images",
 //   express.static(path.join(__dirname, "../public/images"))
 // );
-const uploadPath = path.join(__dirname, "../uploads");
-if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath, { recursive: true });
+const uploadDir = path.join(__dirname, "../uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
-businessProfileRoute.use("/uploads", express.static(uploadPath));
 
-// Multer storage configuration
+// Serve uploaded images
+businessProfileRoute.use("/uploads", express.static(uploadDir));
+
+// Multer config
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadPath),
+  destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
     const originalName = path.parse(file.originalname).name;
     const extension = path.parse(file.originalname).ext;
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${originalName}${extension}`;
-    cb(null, uniqueSuffix);
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${originalName}${extension}`;
+    cb(null, uniqueName);
   },
 });
 const upload = multer({ storage });
@@ -138,7 +140,8 @@ businessProfileRoute.post(
         return res.status(400).json({ error: "All fields including the image are required" });
       }
 
-      const imageName = `${process.env.API_BASE_URL}/uploads/${req.file.filename}`;
+      // Build image URL
+      const imageURL = `${process.env.API_BASE_URL}/uploads/${req.file.filename}`;
 
       const newBusinessProfile = new businessProfileAstrologer({
         name,
@@ -148,7 +151,7 @@ businessProfileRoute.post(
         charges,
         Description,
         mobileNumber,
-        profileImage: imageName,
+        profileImage: imageURL,
         profileStatus,
         chatStatus,
       });
@@ -160,7 +163,7 @@ businessProfileRoute.post(
         BusinessProfileData: newBusinessProfile,
       });
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("Error uploading business profile:", error);
       res.status(500).json({ error: "Failed to add businessProfile" });
     }
   }
