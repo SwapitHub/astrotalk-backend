@@ -24,7 +24,10 @@ const { razorpayRouter } = require("./routes/razorpayRouter");
 
 const app = express();
 const server = http.createServer(app);
-const allowedOrigins = "*"
+const allowedOrigins = [
+  `${process.env.FRONT_END_BASE_URL}`
+  // "http://localhost:3000"
+];
 
 
 app.use(cors({
