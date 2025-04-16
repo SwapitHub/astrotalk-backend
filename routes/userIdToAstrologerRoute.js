@@ -87,70 +87,35 @@ userIdAstRoute.get("/get-userId-to-astrologer", async (req, res) => {
 
 async function socketUserIdToAstrologerMsg(io) {
   io.on("connection", (socket) => {
-    console.log("A user connected:", socket.id);
+    console.log("🔌 A user connected:", socket.id);
 
     socket.on("astrologer-chat-status", async (astrologerData) => {
-      console.log("astrologerData", astrologerData);
-
+      console.log("🔔 astrologerData", astrologerData);
       io.emit("astrologer-data-received-new-notification", {
         message: "You have a new chat request!",
-        astrologerData: astrologerData,
+        astrologerData,
       });
     });
 
-    // Handle userId and astrologerId submission
     socket.on("userId-to-astrologer", async (messageId) => {
-      console.log("Received messageId:", messageId); 
-  
       try {
-        if (!messageId) {
-          throw new Error("messageId object is undefined");
-        }
+        console.log("📩 Received messageId:", messageId);
+        if (!messageId) throw new Error("messageId object is undefined");
 
         const {
-          userIdToAst,
-          astrologerIdToAst,
-          mobileNumber,
-          profileImage,
-          astroName,
-          astroCharges,
-          astroExperience,
-          chatId,
-          chatType,
-          chatDuration,
-          chatDeduction,
-          DeleteOrderHistoryStatus,
-          chatStatus,
+          userIdToAst, astrologerIdToAst, mobileNumber,
+          profileImage, astroName, astroCharges,
+          astroExperience, chatId, chatType,
+          chatDuration, chatDeduction,
+          DeleteOrderHistoryStatus, chatStatus
         } = messageId;
 
-        console.log("Extracted values:", {
-          userIdToAst,
-          astrologerIdToAst,
-          mobileNumber,
-          profileImage,
-          astroName,
-          astroCharges,
-          astroExperience
-        });
-        if (!userIdToAst || !astrologerIdToAst) {
-          throw new Error(
-            `Required fields missing. userIdToAst: ${userIdToAst}, astrologerIdToAst: ${astrologerIdToAst}`
-          );
+        // Validate required fields
+        if (!userIdToAst || !astrologerIdToAst || !mobileNumber || !profileImage ||
+            !astroName || !astroCharges || !astroExperience) {
+          throw new Error("Required fields are missing.");
         }
 
-        if (
-          !userIdToAst ||
-          !astrologerIdToAst ||
-          !mobileNumber ||
-          !profileImage ||
-          !astroName ||
-          !astroCharges ||
-          !astroExperience
-        ) {
-          throw new Error("userIdToAst and astrologerIdToAst are required");
-        }
-
-        // Save the userId and astrologerId to the database
         const newUserIdToAst = new userIdSendToAstrologer({
           userIdToAst,
           astrologerIdToAst,
@@ -166,36 +131,34 @@ async function socketUserIdToAstrologerMsg(io) {
           DeleteOrderHistoryStatus,
           chatStatus,
         });
+
         await newUserIdToAst.save();
 
-        // Emit success response to sender
+        // Respond to sender
         socket.emit("userId-to-astrologer-success", {
           message: "success",
           userIdsSendToAstrologer: newUserIdToAst,
         });
 
-        // Emit notification to all connected astrologers
+        // Notify astrologers
         io.emit("new-notification", {
           message: "You have a new chat request!",
           userId: userIdToAst,
           astrologerId: astrologerIdToAst,
-          mobileNumber: mobileNumber,
+          mobileNumber,
         });
 
-        console.log(
-          `Notification sent to astrologers: ${userIdToAst}, ${astrologerIdToAst}`
-        );
+        console.log(`📨 Notification sent for ${userIdToAst} → ${astrologerIdToAst}`);
       } catch (error) {
-        console.error("Error saving userId and astrologerId:", error);
+        console.error("❌ Error saving userId and astrologerId:", error.message);
         socket.emit("userId-to-astrologer-error", {
-          error: "Failed to save userId and astrologerId",
+          error: error.message || "Failed to save userId and astrologerId",
         });
       }
     });
 
-    // Handle disconnection
     socket.on("disconnect", () => {
-      console.log("A user disconnected:", socket.id);
+      console.log("🔌 A user disconnected:", socket.id);
     });
   });
 }
