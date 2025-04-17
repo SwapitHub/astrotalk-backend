@@ -25,7 +25,7 @@ const { razorpayRouter } = require("./routes/razorpayRouter");
 const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
-  "https://astrotalk-front-end-rwhg.vercel.app"
+  "https://astrotals.netlify.app"
   // "http://localhost:3000"
 ];
 
