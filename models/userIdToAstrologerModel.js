@@ -14,6 +14,7 @@ const userIdSendToAstrologerSchema = new mongoose.Schema({
     chatDeduction: String,
     DeleteOrderHistoryStatus: Boolean, 
     chatStatus: Boolean,
+    profileStatus: Boolean
 
 }, { timestamps: true });
 const userIdSendToAstrologer = mongoose.model("UserIdSendToAstrologer", userIdSendToAstrologerSchema)

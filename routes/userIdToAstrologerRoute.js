@@ -5,40 +5,86 @@ const { default: mongoose } = require("mongoose");
 const userIdAstRoute = express.Router();
 
 userIdAstRoute.put(
-  "/userId-to-astrologer-astro-list-update/:id",
-  async (req, res, next) => {
+  "/userId-to-astrologer-astro-list-update",
+  async (req, res) => {
     try {
-      const { id } = req.params;
-      const { DeleteOrderHistoryStatus } = req.body;
+      const {
+        id,
+        DeleteOrderHistoryStatus,
+        profileStatus,
+        mobileNumber,
+        chatStatus,
+      } = req.body;
+      let updateResults = {};
 
-      // Validate the request parameters
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ error: "Invalid user ID format" });
+      // Update DeleteOrderHistoryStatus by ID
+      if (DeleteOrderHistoryStatus !== undefined) {
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+          return res
+            .status(400)
+            .json({
+              error: "Valid user ID required for DeleteOrderHistoryStatus",
+            });
+        }
+
+        const deleteStatusUpdate =
+          await userIdSendToAstrologer.findByIdAndUpdate(
+            id,
+            { $set: { DeleteOrderHistoryStatus } },
+            { new: true }
+          );
+
+        if (!deleteStatusUpdate) {
+          return res.status(404).json({ error: "User not found by ID" });
+        }
+
+        updateResults.DeleteOrderHistoryStatus = deleteStatusUpdate;
       }
 
-      if (DeleteOrderHistoryStatus === undefined) {
+      // Update profileStatus for all users with same mobileNumber
+      if (profileStatus !== undefined && mobileNumber) {
+        const profileStatusUpdate = await userIdSendToAstrologer.updateMany(
+          { mobileNumber },
+          { $set: { profileStatus } }
+        );
+
+        if (profileStatusUpdate.modifiedCount === 0) {
+          return res
+            .status(404)
+            .json({ error: "No users found with this mobile number" });
+        }
+
+        updateResults.profileStatus = `${profileStatusUpdate.modifiedCount} documents updated`;
+      }
+
+      // Update chatStatus for all users with same mobileNumber
+      if (chatStatus !== undefined && mobileNumber) {
+        const chatStatusUpdate = await userIdSendToAstrologer.updateMany(
+          { mobileNumber },
+          { $set: { chatStatus } }
+        );
+
+        if (chatStatusUpdate.modifiedCount === 0) {
+          return res
+            .status(404)
+            .json({ error: "No users found with this mobile number" });
+        }
+
+        updateResults.chatStatus = `${chatStatusUpdate.modifiedCount} documents updated`;
+      }
+
+      if (Object.keys(updateResults).length === 0) {
         return res
           .status(400)
-          .json({ error: "DeleteOrderHistoryStatus is required" });
-      }
-
-      // Update the user's status
-      const updatedAstrologer = await userIdSendToAstrologer.findByIdAndUpdate(
-        id,
-        { $set: { DeleteOrderHistoryStatus } },
-        { new: true }
-      );
-
-      if (!updatedAstrologer) {
-        return res.status(404).json({ error: "User ID not found" });
+          .json({ error: "No valid fields or identifiers provided" });
       }
 
       res.status(200).json({
-        message: "Astrologer status updated successfully",
-        astrologer: updatedAstrologer,
+        message: "Update successful",
+        updates: updateResults,
       });
-    } catch (error) {
-      console.error("Error updating astrologer:", error);
+    } catch (err) {
+      console.error("Update error:", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   }
@@ -48,21 +94,29 @@ userIdAstRoute.get(
   "/userId-to-astrologer-astro-list/:userIdToAst",
   async (req, res) => {
     try {
-      const astrologers = await userIdSendToAstrologer.find({
+      const { page = 1, limit = 10 } = req.query;
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+
+      const astrologers = await userIdSendToAstrologer
+        .find({ userIdToAst: req.params.userIdToAst })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      const total = await userIdSendToAstrologer.countDocuments({
         userIdToAst: req.params.userIdToAst,
       });
 
-      if (!astrologers || astrologers.length === 0) {
-        return res
-          .status(404)
-          .json({ error: "No astrologers found for this userIdToAst" });
-      }
-
-      res.json(astrologers);
+      res.json({
+        data: astrologers,
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + astrologers.length < total,
+      });
     } catch (error) {
-      res
-        .status(500)
-        .json({ error: "Failed to fetch astrologers", details: error.message });
+      res.status(500).json({
+        error: "Failed to fetch astrologers",
+        details: error.message,
+      });
     }
   }
 );
@@ -118,6 +172,7 @@ async function socketUserIdToAstrologerMsg(io) {
           chatDeduction,
           DeleteOrderHistoryStatus,
           chatStatus,
+          profileStatus
         } = messageId;
 
         // 🚨 Field validation
@@ -136,7 +191,9 @@ async function socketUserIdToAstrologerMsg(io) {
           .map(([key]) => key);
 
         if (missingFields.length > 0) {
-          throw new Error(`Required fields are missing: ${missingFields.join(", ")}`);
+          throw new Error(
+            `Required fields are missing: ${missingFields.join(", ")}`
+          );
         }
 
         // ✅ Save to DB
@@ -154,6 +211,7 @@ async function socketUserIdToAstrologerMsg(io) {
           chatDeduction,
           DeleteOrderHistoryStatus,
           chatStatus,
+          profileStatus
         });
 
         await newUserIdToAst.save();
@@ -172,9 +230,14 @@ async function socketUserIdToAstrologerMsg(io) {
           mobileNumber,
         });
 
-        console.log(`✅ Notification emitted for chat: ${userIdToAst} ➡️ ${astrologerIdToAst}`);
+        console.log(
+          `✅ Notification emitted for chat: ${userIdToAst} ➡️ ${astrologerIdToAst}`
+        );
       } catch (error) {
-        console.error("❌ Error saving userId and astrologerId:", error.message);
+        console.error(
+          "❌ Error saving userId and astrologerId:",
+          error.message
+        );
         socket.emit("userId-to-astrologer-error", {
           error: error.message,
           receivedData: messageId,

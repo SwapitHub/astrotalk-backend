@@ -172,7 +172,7 @@ async function socketIoMessage(io) {
             $set: {
               chatType: "paid",
               chatDuration: chatTimeLeftData.totalChatTime,
-              chatDeduction: `- ₹ ${amount}`,
+              chatDeduction: `${amount}`,
               chatStatus: false,
             },
           }
