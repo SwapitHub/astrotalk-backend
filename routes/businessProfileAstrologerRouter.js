@@ -129,62 +129,71 @@ businessProfileRoute.put(
   upload.single("image"),
   async (req, res) => {
     try {
-      const { mobileNumber: oldMobileNumber } = req.params;
+      const { mobileNumber } = req.params;
+
       const {
         name,
-        profession,
+        professions,
         languages,
         experience,
         charges,
-        Description,
-        profileStatus,
-        chatStatus,
-        mobileNumber: newMobileNumber, // For update (optional)
+        Description       
       } = req.body;
 
+      // Parse if needed (in case frontend sends them as strings)
+      const parsedLanguages = typeof languages === "string" ? JSON.parse(languages) : languages;
+      const parsedProfessions = typeof professions === "string" ? JSON.parse(professions) : professions;
+
+      // Validation (only for required fields you want in updates — relax if partial updates are allowed)
+      if (
+        !name ||
+        !parsedProfessions?.length ||
+        !parsedLanguages?.length ||
+        !experience ||
+        !charges ||
+        !Description 
+    
+      ) {
+        return res.status(400).json({ error: "All fields are required except mobileNumber" });
+      }
+
+      // Prepare update data
       const updateData = {
         name,
-        profession,
-        languages,
+        professions: parsedProfessions,
+        languages: parsedLanguages,
         experience,
         charges,
-        Description,
-        profileStatus,
-        chatStatus,
+        Description        
       };
 
-      // Only include image if uploaded
+      // Handle optional image upload
       if (req.file) {
         updateData.profileImage = `/uploads/${req.file.filename}`;
       }
 
-      // Only update mobileNumber if a new one is provided
-      if (newMobileNumber) {
-        updateData.mobileNumber = newMobileNumber;
-      }
-
       const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
-        { mobileNumber: oldMobileNumber },
+        { mobileNumber },
         { $set: updateData },
         { new: true }
       );
 
       if (!updatedProfile) {
-        return res
-          .status(404)
-          .json({ error: "Astrologer profile not found for update" });
+        return res.status(404).json({ error: "Astrologer profile not found" });
       }
 
       res.status(200).json({
-        message: "Profile updated successfully",
+        message: "success",
         updatedProfile,
       });
     } catch (error) {
-      console.error("Update failed:", error);
-      res.status(500).json({ error: "Failed to update astrologer profile" });
+      console.error("Profile update failed:", error);
+      res.status(500).json({ error: "Failed to update business profile" });
     }
   }
 );
+
+
 
 
 businessProfileRoute.post(
