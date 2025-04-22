@@ -172,7 +172,11 @@ async function socketUserIdToAstrologerMsg(io) {
           chatDeduction,
           DeleteOrderHistoryStatus,
           chatStatus,
-          profileStatus
+          profileStatus,
+          userName,
+          userDateOfBirth,
+          userPlaceOfBorn,
+          userBornTime
         } = messageId;
 
         // 🚨 Field validation
@@ -228,6 +232,10 @@ async function socketUserIdToAstrologerMsg(io) {
           userId: userIdToAst,
           astrologerId: astrologerIdToAst,
           mobileNumber,
+          userName,
+          userDateOfBirth,
+          userPlaceOfBorn,
+          userBornTime
         });
 
         console.log(
