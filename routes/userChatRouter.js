@@ -153,9 +153,9 @@ async function socketIoMessage(io) {
         // let intervals = Math.ceil(chatTimeLeftData.totalChatTime / 60); // 1-60 => 1, 61-120 => 2, 121-180 => 3...
         // let amount = intervals * chatTimeLeftData.astrologerChargePerMinute; // Subtract 10 for each interval
         let amount = chatTimeLeftData.actualChargeUserChat;
-        console.log("totalamountrrr", chatTimeLeftData.actualChargeUserChat);
+        console.log("totalamountrrr", typeof(chatTimeLeftData.updateAdminCommission));
 
-        let adminCommission = (amount * 2) / 100;
+        let adminCommission = (amount * chatTimeLeftData.updateAdminCommission) / 100;
         let astrologerEarnings = amount - adminCommission;
 
         const latestOrder = await userIdSendToAstrologer
