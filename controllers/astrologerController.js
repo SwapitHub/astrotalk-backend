@@ -44,6 +44,8 @@ const getAstrologerDetail = async (req, res, next) => {
 
 // ✅ Register New Astrologer
 const registerAstrologer = async (req, res, next) => {
+  console.log("req.body",req.body);
+  
   try {
     const {
       name,

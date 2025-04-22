@@ -22,6 +22,8 @@ const otpRoutes = require("./routes/OtpRoute");
 const { denominationRoute } = require("./routes/denominationAdminRouter");
 const { razorpayRouter } = require("./routes/razorpayRouter");
 const adminRoutes = require("./routes/adminLoginRouter");
+const addLanguageRoute = require("./routes/addLanguageRouter");
+const addProfessionRoute = require("./routes/addProfessionRouter");
 
 const app = express();
 const server = http.createServer(app);
@@ -92,6 +94,8 @@ app.use("/", otpRoutes);
 app.use("/", denominationRoute);
 app.use("/", razorpayRouter);
 app.use("/", adminRoutes);
+app.use("/", addLanguageRoute);
+app.use("/", addProfessionRoute);
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);

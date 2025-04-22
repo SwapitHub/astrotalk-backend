@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 
 const businessProfileAstrologerSchema = new mongoose.Schema({
   name: String,
-  profession: String,
-  languages: String,
+  professions: [{ type: String }],  
+  languages: [{ type: String, required: true }],
   experience: String,  
   charges : String,
   Description : String,

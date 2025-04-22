@@ -77,7 +77,7 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
   }
 });
 
-// update API
+// update status API
 businessProfileRoute.put(
   "/update-astro-status-by-mobile/:mobileNumber",
   async (req, res, next) => {
@@ -122,14 +122,82 @@ businessProfileRoute.put(
   }
 );
 
+
+// update all field API astrologer profile
+businessProfileRoute.put(
+  "/astrologer-businessProfile-update/:mobileNumber",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const { mobileNumber: oldMobileNumber } = req.params;
+      const {
+        name,
+        profession,
+        languages,
+        experience,
+        charges,
+        Description,
+        profileStatus,
+        chatStatus,
+        mobileNumber: newMobileNumber, // For update (optional)
+      } = req.body;
+
+      const updateData = {
+        name,
+        profession,
+        languages,
+        experience,
+        charges,
+        Description,
+        profileStatus,
+        chatStatus,
+      };
+
+      // Only include image if uploaded
+      if (req.file) {
+        updateData.profileImage = `/uploads/${req.file.filename}`;
+      }
+
+      // Only update mobileNumber if a new one is provided
+      if (newMobileNumber) {
+        updateData.mobileNumber = newMobileNumber;
+      }
+
+      const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
+        { mobileNumber: oldMobileNumber },
+        { $set: updateData },
+        { new: true }
+      );
+
+      if (!updatedProfile) {
+        return res
+          .status(404)
+          .json({ error: "Astrologer profile not found for update" });
+      }
+
+      res.status(200).json({
+        message: "Profile updated successfully",
+        updatedProfile,
+      });
+    } catch (error) {
+      console.error("Update failed:", error);
+      res.status(500).json({ error: "Failed to update astrologer profile" });
+    }
+  }
+);
+
+
 businessProfileRoute.post(
   "/astrologer-businessProfile",
   upload.single("image"),
   async (req, res) => {
+
+    console.log("req.bodys",req.body);
+    
     try {
       const {
         name,
-        profession,
+        professions,
         languages,
         experience,
         charges,
@@ -139,11 +207,16 @@ businessProfileRoute.post(
         chatStatus,
       } = req.body;
 
+
+      // Parse JSON strings if sent that way
+      const parsedLanguages = typeof languages === "string" ? JSON.parse(languages) : languages;
+      const parsedProfessions = typeof professions === "string" ? JSON.parse(professions) : professions;
+
       // Validation
       if (
         !name ||
-        !profession ||
-        !languages ||
+        !parsedProfessions?.length ||
+        !parsedLanguages?.length ||
         !experience ||
         !charges ||
         !Description ||
@@ -162,8 +235,8 @@ businessProfileRoute.post(
 
       const newBusinessProfile = new businessProfileAstrologer({
         name,
-        profession,
-        languages,
+        professions: parsedProfessions,
+        languages: parsedLanguages,
         experience,
         charges,
         Description,
