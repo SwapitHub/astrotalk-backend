@@ -100,6 +100,7 @@ userIdAstRoute.get(
       const astrologers = await userIdSendToAstrologer
         .find({ userIdToAst: req.params.userIdToAst })
         .skip(skip)
+        .sort({ _id: -1 }) 
         .limit(parseInt(limit));
 
       const total = await userIdSendToAstrologer.countDocuments({
