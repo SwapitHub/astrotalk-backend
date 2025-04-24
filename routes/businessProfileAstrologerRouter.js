@@ -52,9 +52,17 @@ businessProfileRoute.get(
       if (isObjectId) {
         businessProfile = await businessProfileAstrologer.findById(query);
       } else {
+        // First try to find by mobileNumber
         businessProfile = await businessProfileAstrologer.findOne({
           mobileNumber: query,
         });
+
+        // If not found by mobileNumber, try to find by name (case-insensitive)
+        if (!businessProfile) {
+          businessProfile = await businessProfileAstrologer.findOne({
+            name: { $regex: new RegExp(`^${query}$`, "i") },
+          });
+        }
       }
 
       if (!businessProfile) {
@@ -63,19 +71,57 @@ businessProfileRoute.get(
 
       res.json(businessProfile);
     } catch (error) {
+      console.error("Fetch error:", error);
       res.status(500).json({ error: "Failed to fetch business profile" });
     }
   }
 );
 
+
 businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
   try {
-    const businessProfile = await businessProfileAstrologer.find();
-    res.json(businessProfile);
+    const { sortby, page = 1, limit = 10, name } = req.query;
+
+    // 1. Build filter query
+    let query = {};
+    if (name) {
+      query.name = { $regex: new RegExp(name, "i") }; // Filter by name (case-insensitive)
+    }
+
+    // 2. Fetch filtered data
+    let profiles = await businessProfileAstrologer.find(query);
+
+    // 3. Apply sorting if needed
+    if (sortby === "charges_high_to_low") {
+      profiles.sort((a, b) => Number(b.charges) - Number(a.charges));
+    } else if (sortby === "charges_low_to_high") {
+      profiles.sort((a, b) => Number(a.charges) - Number(b.charges));
+    } else if (sortby === "experience_high_to_low") {
+      profiles.sort((a, b) => Number(b.experience) - Number(a.experience));
+    } else if (sortby === "experience_low_to_high") {
+      profiles.sort((a, b) => Number(a.experience) - Number(b.experience));
+    }
+
+    // 4. Paginate
+    const startIndex = (parseInt(page) - 1) * parseInt(limit);
+    const endIndex = startIndex + parseInt(limit);
+    const paginatedProfiles = profiles.slice(startIndex, endIndex);
+
+    // 5. Send response
+    res.json({
+      total: profiles.length,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(profiles.length / limit),
+      profiles: paginatedProfiles,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
+
+
+
+
 
 // update status API
 businessProfileRoute.put(
