@@ -29,7 +29,7 @@ const adminCommissionRoute = require("./routes/adminCommissionRouter");
 const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
-  "https://astrotals.netlify.app"
+  "https://astrotalk-front-end.vercel.app"
   // "http://localhost:3000"
 ];
 
