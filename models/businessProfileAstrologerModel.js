@@ -11,7 +11,12 @@ const businessProfileAstrologerSchema = new mongoose.Schema({
   mobileNumber: String,
   profileImage: String,
   profileStatus: Boolean,
-  chatStatus: Boolean
+  chatStatus: Boolean,
+  country: String,
+  gender: String,
+  starRating: String,
+  orders: String,
+  offers: String
 });
 
 const businessProfileAstrologer = mongoose.model("businessProfileAstrologer" , businessProfileAstrologerSchema)

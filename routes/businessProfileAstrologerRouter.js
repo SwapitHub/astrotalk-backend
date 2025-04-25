@@ -80,44 +80,82 @@ businessProfileRoute.get(
 
 businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
   try {
-    const { sortby, page = 1, limit = 10, name } = req.query;
+    const {
+      languages,
+      professions,
+      gender,
+      country,
+      name,
+      sortby,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    // 1. Build filter query
-    let query = {};
+    // 🔍 Step 1: Build filter object
+    const filter = {};
+
+    if (languages) {
+      filter.languages = { $in: languages.split(",") };
+    }
+
+    if (professions) {
+      filter.professions = { $in: professions.split(",") };
+    }
+
+    if (gender) {
+      filter.gender = { $in: gender.split(",") };
+    }
+
+    if (country) {
+      filter.country = { $in: country.split(",") };
+    }
+
     if (name) {
-      query.name = { $regex: new RegExp(name, "i") }; // Filter by name (case-insensitive)
+      filter.name = { $regex: new RegExp(name, "i") }; // Case-insensitive search
     }
 
-    // 2. Fetch filtered data
-    let profiles = await businessProfileAstrologer.find(query);
+    // 🔃 Step 2: Build sort object
+    let sort = {};
 
-    // 3. Apply sorting if needed
-    if (sortby === "charges_high_to_low") {
-      profiles.sort((a, b) => Number(b.charges) - Number(a.charges));
-    } else if (sortby === "charges_low_to_high") {
-      profiles.sort((a, b) => Number(a.charges) - Number(b.charges));
-    } else if (sortby === "experience_high_to_low") {
-      profiles.sort((a, b) => Number(b.experience) - Number(a.experience));
-    } else if (sortby === "experience_low_to_high") {
-      profiles.sort((a, b) => Number(a.experience) - Number(b.experience));
+    switch (sortby) {
+      case "charges_high_to_low":
+        sort.charges = -1;
+        break;
+      case "charges_low_to_high":
+        sort.charges = 1;
+        break;
+      case "experience_high_to_low":
+        sort.experience = -1;
+        break;
+      case "experience_low_to_high":
+        sort.experience = 1;
+        break;
     }
 
-    // 4. Paginate
-    const startIndex = (parseInt(page) - 1) * parseInt(limit);
-    const endIndex = startIndex + parseInt(limit);
-    const paginatedProfiles = profiles.slice(startIndex, endIndex);
+    // 🔄 Step 3: Pagination calculations
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // 5. Send response
+    // 📄 Step 4: Query with filter, sort, and pagination
+    const total = await businessProfileAstrologer.countDocuments(filter);
+    const profiles = await businessProfileAstrologer
+      .find(filter)
+      .sort(sort)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // ✅ Step 5: Respond
     res.json({
-      total: profiles.length,
+      total,
       currentPage: parseInt(page),
-      totalPages: Math.ceil(profiles.length / limit),
-      profiles: paginatedProfiles,
+      totalPages: Math.ceil(total / limit),
+      profiles,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 });
+
 
 
 
@@ -183,7 +221,9 @@ businessProfileRoute.put(
         languages,
         experience,
         charges,
-        Description       
+        Description,   
+        country,
+        gender,           
       } = req.body;
 
       // Parse if needed (in case frontend sends them as strings)
@@ -197,7 +237,9 @@ businessProfileRoute.put(
         !parsedLanguages?.length ||
         !experience ||
         !charges ||
-        !Description 
+        !Description ||
+        !country ||
+        !gender
     
       ) {
         return res.status(400).json({ error: "All fields are required except mobileNumber" });
@@ -210,7 +252,9 @@ businessProfileRoute.put(
         languages: parsedLanguages,
         experience,
         charges,
-        Description        
+        Description,
+        country,
+        gender,        
       };
 
       // Handle optional image upload
@@ -260,6 +304,11 @@ businessProfileRoute.post(
         mobileNumber,
         profileStatus,
         chatStatus,
+        country,
+        gender,
+        starRating,
+        orders,
+        offers
       } = req.body;
 
 
@@ -278,7 +327,9 @@ businessProfileRoute.post(
         !mobileNumber ||
         !req.file ||
         profileStatus === undefined ||
-        chatStatus === undefined
+        chatStatus === undefined ||
+        !country ||
+        !gender
       ) {
         return res
           .status(400)
@@ -299,6 +350,11 @@ businessProfileRoute.post(
         profileImage: imageURL,
         profileStatus,
         chatStatus,
+        country,
+        gender,
+        starRating,
+        orders,
+        offers
       });
 
       await newBusinessProfile.save();
