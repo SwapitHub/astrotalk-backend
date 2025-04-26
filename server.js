@@ -39,13 +39,14 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error("The CORS policy does not allow access from this origin."), false);
+    return callback(new Error("Not allowed by CORS"));
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }));
-app.options('*', cors());
+
+app.options("*", cors());
 
 // === SOCKET.IO ===
 const io = new Server(server, {
