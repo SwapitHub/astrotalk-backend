@@ -39,8 +39,10 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error("Not allowed by CORS"), false);
+    return callback(new Error("The CORS policy does not allow access from this origin."), false);
   },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }));
 app.options('*', cors());
@@ -80,6 +82,7 @@ app.use(cors());
 connectMongoDb(
   "mongodb+srv://swapitshamsher:Eb25QUq9aEt27aSQ@astrologer.euynurr.mongodb.net/astrotalk?retryWrites=true&w=majority&appName=astrologer"
 );
+
 app.use(express.json());
 // user connect chatting socket.io
 
