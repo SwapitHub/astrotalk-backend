@@ -80,6 +80,7 @@ AuthRoutes.post("/user-login", async (req, res) => {
       language,
       phone,
       totalAmount,
+      freeChatStatus
     } = req.body;
 
     if (!phone) {
@@ -102,6 +103,7 @@ AuthRoutes.post("/user-login", async (req, res) => {
       language,
       phone,
       totalAmount,
+      freeChatStatus
     });
 
     await newUser.save();

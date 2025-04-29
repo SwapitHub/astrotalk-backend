@@ -82,7 +82,6 @@ app.use(cors());
 connectMongoDb(
   "mongodb+srv://swapitshamsher:Eb25QUq9aEt27aSQ@astrologer.euynurr.mongodb.net/astrotalk?retryWrites=true&w=majority&appName=astrologer"
 );
-
 app.use(express.json());
 // user connect chatting socket.io
 

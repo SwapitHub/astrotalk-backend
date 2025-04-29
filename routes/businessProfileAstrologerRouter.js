@@ -89,6 +89,7 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
       sortby,
       page = 1,
       limit = 10,
+      freeChatStatus,
     } = req.query;
 
     // 🔍 Step 1: Build filter object
@@ -112,6 +113,10 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
 
     if (name) {
       filter.name = { $regex: new RegExp(name, "i") }; // Case-insensitive search
+    }
+
+    if (freeChatStatus !== undefined) {
+      filter.freeChatStatus = freeChatStatus === "true"; // 🔥 Correct: convert "true" or "false" string to real boolean
     }
 
     // 🔃 Step 2: Build sort object
@@ -283,15 +288,64 @@ businessProfileRoute.put(
   }
 );
 
+businessProfileRoute.put(
+  "/update-business-profile/:mobileNumber",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const { mobileNumber } = req.params;
+      const updateFields = req.body;
+
+      if (!mobileNumber) {
+        return res.status(400).json({ error: "Mobile number is required" });
+      }
+
+      // Handle professions and languages if frontend sends them as JSON strings
+      if (updateFields.languages && typeof updateFields.languages === "string") {
+        updateFields.languages = JSON.parse(updateFields.languages);
+      }
+      if (updateFields.professions && typeof updateFields.professions === "string") {
+        updateFields.professions = JSON.parse(updateFields.professions);
+      }
+
+      // Handle profile image if uploaded
+      if (req.file) {
+        updateFields.profileImage = `/uploads/${req.file.filename}`;
+      }
+
+      // Check if updateFields has at least one field
+      if (!Object.keys(updateFields).length) {
+        return res.status(400).json({ error: "At least one field must be provided to update" });
+      }
+
+      // Find and update astrologer's profile
+      const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
+        { mobileNumber },
+        { $set: updateFields },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedProfile) {
+        return res.status(404).json({ error: "Astrologer profile not found" });
+      }
+
+      res.status(200).json({
+        message: "Success",
+        updatedProfile,
+      });
+    } catch (error) {
+      console.error("Error updating business profile:", error);
+      return res.status(500).json({ error: "Failed to update business profile", details: error.message });
+    }
+  }
+);
 
 
 
 businessProfileRoute.post(
   "/astrologer-businessProfile",
   upload.single("image"),
-  async (req, res) => {
-
-    console.log("req.bodys",req.body);
+  async (req, res) => {    
     
     try {
       const {
@@ -308,7 +362,8 @@ businessProfileRoute.post(
         gender,
         starRating,
         orders,
-        offers
+        offers,
+        freeChatStatus
       } = req.body;
 
 
@@ -354,7 +409,8 @@ businessProfileRoute.post(
         gender,
         starRating,
         orders,
-        offers
+        offers,
+        freeChatStatus
       });
 
       await newBusinessProfile.save();

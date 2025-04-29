@@ -16,7 +16,8 @@ const businessProfileAstrologerSchema = new mongoose.Schema({
   gender: String,
   starRating: String,
   orders: String,
-  offers: String
+  offers: String,
+  freeChatStatus: Boolean
 });
 
 const businessProfileAstrologer = mongoose.model("businessProfileAstrologer" , businessProfileAstrologerSchema)
