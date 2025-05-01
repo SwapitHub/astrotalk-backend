@@ -40,6 +40,28 @@ businessProfileRoute.get("/uploads-test", (req, res) => {
 // multer for image upload End here
 
 businessProfileRoute.get(
+  "/astrologer-businessProfile/free-chat-true",
+  async (req, res) => {
+    try {
+      const freeChatAstrologers = await businessProfileAstrologer.find({
+        freeChatStatus: true,
+      });
+
+      // Just send back empty array if no data found
+      res.status(200).json({
+        message: "success",
+        data: freeChatAstrologers,
+      });
+    } catch (error) {
+      console.error("Error fetching free chat astrologers:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+
+
+businessProfileRoute.get(
   "/astrologer-businessProfile/:query",
   async (req, res) => {
     try {
@@ -172,7 +194,7 @@ businessProfileRoute.put(
   async (req, res, next) => {
     try {
       const { mobileNumber } = req.params;
-      const { profileStatus, chatStatus } = req.body;
+      const { profileStatus, chatStatus,requestStatus } = req.body;
 
       if (profileStatus === undefined && chatStatus === undefined) {
         return res
@@ -189,6 +211,9 @@ businessProfileRoute.put(
 
       if (chatStatus !== undefined) {
         updateFields.chatStatus = chatStatus === true || chatStatus === "true";
+      } 
+       if (requestStatus !== undefined) {
+        updateFields.requestStatus = requestStatus === true || requestStatus === "true";
       }
 
       const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
@@ -342,6 +367,8 @@ businessProfileRoute.put(
 
 
 
+
+
 businessProfileRoute.post(
   "/astrologer-businessProfile",
   upload.single("image"),
@@ -363,7 +390,8 @@ businessProfileRoute.post(
         starRating,
         orders,
         offers,
-        freeChatStatus
+        freeChatStatus,
+        requestStatus
       } = req.body;
 
 
@@ -410,7 +438,8 @@ businessProfileRoute.post(
         starRating,
         orders,
         offers,
-        freeChatStatus
+        freeChatStatus,
+        requestStatus
       });
 
       await newBusinessProfile.save();

@@ -1,6 +1,7 @@
-const mongoose  = require("mongoose")
+const mongoose = require("mongoose");
 
-const userIdSendToAstrologerSchema = new mongoose.Schema({
+const userIdSendToAstrologerSchema = new mongoose.Schema(
+  {
     userIdToAst: String,
     astrologerIdToAst: String,
     mobileNumber: String,
@@ -12,10 +13,18 @@ const userIdSendToAstrologerSchema = new mongoose.Schema({
     chatType: String,
     chatDuration: String,
     chatDeduction: String,
-    DeleteOrderHistoryStatus: Boolean, 
+    DeleteOrderHistoryStatus: Boolean,
     chatStatus: Boolean,
-    profileStatus: Boolean
-
-}, { timestamps: true });
-const userIdSendToAstrologer = mongoose.model("UserIdSendToAstrologer", userIdSendToAstrologerSchema)
-module.exports =  userIdSendToAstrologer;
+    profileStatus: Boolean,
+    userName: String,
+    userDateOfBirth: String,
+    userPlaceOfBorn: String,
+    userBornTime: String,
+  },
+  { timestamps: true }
+);
+const userIdSendToAstrologer = mongoose.model(
+  "UserIdSendToAstrologer",
+  userIdSendToAstrologerSchema
+);
+module.exports = userIdSendToAstrologer;

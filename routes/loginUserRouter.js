@@ -36,9 +36,9 @@ AuthRoutes.get("/user-login-detail/:query", async (req, res) => {
   }
 });
 
-AuthRoutes.put("/update-user/:phone", async (req, res) => {
+AuthRoutes.put("/update-user/:phoneOrId", async (req, res) => {
   try {
-    const { phone } = req.params;
+    const { phoneOrId } = req.params;
     const updateFields = req.body;
 
     if (!Object.keys(updateFields).length) {
@@ -47,8 +47,13 @@ AuthRoutes.put("/update-user/:phone", async (req, res) => {
         .json({ error: "At least one field is required to update" });
     }
 
+    // Determine if it's a valid MongoDB ObjectId
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(phoneOrId);
+
+    const query = isObjectId ? { _id: phoneOrId } : { phone: phoneOrId };
+
     const updatedUser = await UserLogin.findOneAndUpdate(
-      { phone },
+      query,
       { $set: updateFields },
       { new: true, runValidators: true }
     );
@@ -63,11 +68,10 @@ AuthRoutes.put("/update-user/:phone", async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating user:", error);
-    return res
-      .status(500)
-      .json({ error: "Failed to update user", details: error.message });
+    res.status(500).json({ error: "Failed to update user", details: error.message });
   }
 });
+
 
 AuthRoutes.post("/user-login", async (req, res) => {
   try {

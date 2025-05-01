@@ -145,7 +145,7 @@ async function socketUserIdToAstrologerMsg(io) {
     console.log("✅ Socket connected:", socket.id);
 
     socket.on("astrologer-chat-status", async (astrologerData) => {
-      console.log("🔔 astrologer-chat-status:", astrologerData);
+      console.log("🔔 astrologer-chat-statusd:", astrologerData);
 
       io.emit("astrologer-data-received-new-notification", {
         message: "You have a new chat request!",
@@ -153,8 +153,19 @@ async function socketUserIdToAstrologerMsg(io) {
       });
     });
 
+
+    socket.on("astrologer-chat-requestStatus", async (requestStatusData) => {
+      console.log("🔔 astrologer-chat-requestStatusd:", requestStatusData);
+
+      io.emit("astrologer-requestStatus-new-notification", {
+        message: "You have a new chat request!",
+        requestStatusData,
+      });
+    });
+
+
     socket.on("userId-to-astrologer", async (messageId) => {
-      console.log("📩 Received messageId:", messageId);
+      console.log("📩 Received messageIds:", messageId);
 
       try {
         if (!messageId) throw new Error("messageId is undefined");
@@ -177,7 +188,8 @@ async function socketUserIdToAstrologerMsg(io) {
           userName,
           userDateOfBirth,
           userPlaceOfBorn,
-          userBornTime
+          userBornTime,
+          requestStatus
         } = messageId;
 
         // 🚨 Field validation
@@ -216,7 +228,11 @@ async function socketUserIdToAstrologerMsg(io) {
           chatDeduction,
           DeleteOrderHistoryStatus,
           chatStatus,
-          profileStatus
+          profileStatus,
+          userName,
+          userDateOfBirth,
+          userPlaceOfBorn,
+          userBornTime,
         });
 
         await newUserIdToAst.save();
@@ -236,7 +252,9 @@ async function socketUserIdToAstrologerMsg(io) {
           userName,
           userDateOfBirth,
           userPlaceOfBorn,
-          userBornTime
+          userBornTime,
+          request_id: newUserIdToAst._id,
+          requestStatus
         });
 
         console.log(
