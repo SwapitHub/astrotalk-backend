@@ -4,6 +4,7 @@ const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 const businessProfileAstrologer = require("../models/businessProfileAstrologerModel");
+const ratingModel = require("../models/ratingModel");
 const businessProfileRoute = express.Router();
 
 // multer for image upload start here
@@ -27,7 +28,9 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const originalName = path.parse(file.originalname).name;
     const extension = path.parse(file.originalname).ext;
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${originalName}${extension}`;
+    const uniqueName = `${Date.now()}-${Math.round(
+      Math.random() * 1e9
+    )}-${originalName}${extension}`;
     cb(null, uniqueName);
   },
 });
@@ -58,8 +61,6 @@ businessProfileRoute.get(
     }
   }
 );
-
-
 
 businessProfileRoute.get(
   "/astrologer-businessProfile/:query",
@@ -98,7 +99,6 @@ businessProfileRoute.get(
     }
   }
 );
-
 
 businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
   try {
@@ -170,12 +170,35 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit));
 
+    // 🌟 Step 5: Attach average rating and total reviews
+    const enrichedProfiles = await Promise.all(
+      profiles.map(async (profile) => {
+        const ratings = await ratingModel.find({ astrologerId: profile._id });
+        const average =
+          ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length || 0;
+
+        const formattedRatings = ratings.map((r) => ({
+          rating: r.rating,
+          userName: r.userName || "Anonymous",
+          review: r.review || "",
+          date: r.createdAt,
+        }));
+
+        return {
+          ...profile.toObject(),
+          averageRating: average.toFixed(1),
+          totalReviews: ratings.length,
+          reviews: formattedRatings,
+        };
+      })
+    );
+
     // ✅ Step 5: Respond
     res.json({
       total,
       currentPage: parseInt(page),
       totalPages: Math.ceil(total / limit),
-      profiles,
+      profiles: enrichedProfiles,
     });
   } catch (err) {
     console.error(err);
@@ -183,18 +206,13 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
   }
 });
 
-
-
-
-
-
 // update status API
 businessProfileRoute.put(
   "/update-astro-status-by-mobile/:mobileNumber",
   async (req, res, next) => {
     try {
       const { mobileNumber } = req.params;
-      const { profileStatus, chatStatus,requestStatus } = req.body;
+      const { profileStatus, chatStatus, requestStatus } = req.body;
 
       if (profileStatus === undefined && chatStatus === undefined) {
         return res
@@ -211,9 +229,10 @@ businessProfileRoute.put(
 
       if (chatStatus !== undefined) {
         updateFields.chatStatus = chatStatus === true || chatStatus === "true";
-      } 
-       if (requestStatus !== undefined) {
-        updateFields.requestStatus = requestStatus === true || requestStatus === "true";
+      }
+      if (requestStatus !== undefined) {
+        updateFields.requestStatus =
+          requestStatus === true || requestStatus === "true";
       }
 
       const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
@@ -236,7 +255,6 @@ businessProfileRoute.put(
   }
 );
 
-
 // update all field API astrologer profile
 businessProfileRoute.put(
   "/astrologer-businessProfile-update/:mobileNumber",
@@ -251,14 +269,16 @@ businessProfileRoute.put(
         languages,
         experience,
         charges,
-        Description,   
+        Description,
         country,
-        gender,           
+        gender,
       } = req.body;
 
       // Parse if needed (in case frontend sends them as strings)
-      const parsedLanguages = typeof languages === "string" ? JSON.parse(languages) : languages;
-      const parsedProfessions = typeof professions === "string" ? JSON.parse(professions) : professions;
+      const parsedLanguages =
+        typeof languages === "string" ? JSON.parse(languages) : languages;
+      const parsedProfessions =
+        typeof professions === "string" ? JSON.parse(professions) : professions;
 
       // Validation (only for required fields you want in updates — relax if partial updates are allowed)
       if (
@@ -270,9 +290,10 @@ businessProfileRoute.put(
         !Description ||
         !country ||
         !gender
-    
       ) {
-        return res.status(400).json({ error: "All fields are required except mobileNumber" });
+        return res
+          .status(400)
+          .json({ error: "All fields are required except mobileNumber" });
       }
 
       // Prepare update data
@@ -284,7 +305,7 @@ businessProfileRoute.put(
         charges,
         Description,
         country,
-        gender,        
+        gender,
       };
 
       // Handle optional image upload
@@ -326,10 +347,16 @@ businessProfileRoute.put(
       }
 
       // Handle professions and languages if frontend sends them as JSON strings
-      if (updateFields.languages && typeof updateFields.languages === "string") {
+      if (
+        updateFields.languages &&
+        typeof updateFields.languages === "string"
+      ) {
         updateFields.languages = JSON.parse(updateFields.languages);
       }
-      if (updateFields.professions && typeof updateFields.professions === "string") {
+      if (
+        updateFields.professions &&
+        typeof updateFields.professions === "string"
+      ) {
         updateFields.professions = JSON.parse(updateFields.professions);
       }
 
@@ -340,7 +367,9 @@ businessProfileRoute.put(
 
       // Check if updateFields has at least one field
       if (!Object.keys(updateFields).length) {
-        return res.status(400).json({ error: "At least one field must be provided to update" });
+        return res
+          .status(400)
+          .json({ error: "At least one field must be provided to update" });
       }
 
       // Find and update astrologer's profile
@@ -360,20 +389,20 @@ businessProfileRoute.put(
       });
     } catch (error) {
       console.error("Error updating business profile:", error);
-      return res.status(500).json({ error: "Failed to update business profile", details: error.message });
+      return res
+        .status(500)
+        .json({
+          error: "Failed to update business profile",
+          details: error.message,
+        });
     }
   }
 );
 
-
-
-
-
 businessProfileRoute.post(
   "/astrologer-businessProfile",
   upload.single("image"),
-  async (req, res) => {    
-    
+  async (req, res) => {
     try {
       const {
         name,
@@ -391,13 +420,14 @@ businessProfileRoute.post(
         orders,
         offers,
         freeChatStatus,
-        requestStatus
+        requestStatus,
       } = req.body;
 
-
       // Parse JSON strings if sent that way
-      const parsedLanguages = typeof languages === "string" ? JSON.parse(languages) : languages;
-      const parsedProfessions = typeof professions === "string" ? JSON.parse(professions) : professions;
+      const parsedLanguages =
+        typeof languages === "string" ? JSON.parse(languages) : languages;
+      const parsedProfessions =
+        typeof professions === "string" ? JSON.parse(professions) : professions;
 
       // Validation
       if (
@@ -439,7 +469,7 @@ businessProfileRoute.post(
         orders,
         offers,
         freeChatStatus,
-        requestStatus
+        requestStatus,
       });
 
       await newBusinessProfile.save();
@@ -454,6 +484,5 @@ businessProfileRoute.post(
     }
   }
 );
-
 
 module.exports = { businessProfileRoute };

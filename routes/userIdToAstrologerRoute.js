@@ -163,6 +163,15 @@ async function socketUserIdToAstrologerMsg(io) {
       });
     });
 
+    socket.on("astrologer-chat-requestPaidChat", async (requestStatusData) => {
+      console.log("🔔 astrologer-chat-requestPaidChat:", requestStatusData);
+
+      io.emit("astrologer-requestPaidChat-new-notification", {
+        message: "You have a new chat request!",
+        requestStatusData,
+      });
+    });
+
 
     socket.on("userId-to-astrologer", async (messageId) => {
       console.log("📩 Received messageIds:", messageId);

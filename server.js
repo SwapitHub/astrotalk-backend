@@ -25,6 +25,8 @@ const adminRoutes = require("./routes/adminLoginRouter");
 const addLanguageRoute = require("./routes/addLanguageRouter");
 const addProfessionRoute = require("./routes/addProfessionRouter");
 const adminCommissionRoute = require("./routes/adminCommissionRouter");
+const emailRouter = require("./routes/emailRouter");
+const { ratingRoutes } = require("./routes/ratingRouter");
 
 const app = express();
 const server = http.createServer(app);
@@ -98,6 +100,8 @@ app.use("/", adminRoutes);
 app.use("/", addLanguageRoute);
 app.use("/", addProfessionRoute);
 app.use("/", adminCommissionRoute);
+app.use("/", emailRouter);
+app.use("/", ratingRoutes);
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);
