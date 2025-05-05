@@ -70,18 +70,15 @@ businessProfileRoute.get(
       const { query } = req.params;
 
       let businessProfile;
-
       const isObjectId = /^[0-9a-fA-F]{24}$/.test(query);
 
       if (isObjectId) {
         businessProfile = await businessProfileAstrologer.findById(query);
       } else {
-        // First try to find by mobileNumber
         businessProfile = await businessProfileAstrologer.findOne({
           mobileNumber: query,
         });
 
-        // If not found by mobileNumber, try to find by name (case-insensitive)
         if (!businessProfile) {
           businessProfile = await businessProfileAstrologer.findOne({
             name: { $regex: new RegExp(`^${query}$`, "i") },
@@ -93,13 +90,37 @@ businessProfileRoute.get(
         return res.status(404).json({ error: "Business profile not found" });
       }
 
-      res.json(businessProfile);
+      // ⭐ Fetch Ratings
+      const ratings = await ratingModel.find({ astrologerId: businessProfile._id });
+      const average =
+        ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length || 0;
+
+      const formattedRatings = ratings.map((r) => ({
+        rating: r.rating,
+        userName: r.userName || "Anonymous",
+        review: r.review || "",
+        date: r.createdAt,
+      }));
+
+      // 📦 Fetch Orders
+      const orders = await orderModel.find({ astrologerId: businessProfile._id });
+      const totalOrderCount = orders.reduce((sum, o) => sum + (o.order || 0), 0);
+
+      // ✅ Response
+      res.json({
+        ...businessProfile.toObject(),
+        averageRating: average.toFixed(1),
+        totalReviews: ratings.length,
+        totalOrders: totalOrderCount,
+        reviews: formattedRatings,
+      });
     } catch (error) {
       console.error("Fetch error:", error);
       res.status(500).json({ error: "Failed to fetch business profile" });
     }
   }
 );
+
 
 businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
   try {
@@ -185,9 +206,12 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
           date: r.createdAt,
         }));
 
-   // 🔢 Get total order count
-   const orders = await orderModel.find({ astrologerId: profile._id });
-   const totalOrderCount = orders.reduce((sum, o) => sum + (o.order || 0), 0);
+        // 🔢 Get total order count
+        const orders = await orderModel.find({ astrologerId: profile._id });
+        const totalOrderCount = orders.reduce(
+          (sum, o) => sum + (o.order || 0),
+          0
+        );
 
         return {
           ...profile.toObject(),
@@ -199,8 +223,6 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
       })
     );
 
-
-    
     // ✅ Step 5: Respond
     res.json({
       total,
@@ -397,12 +419,10 @@ businessProfileRoute.put(
       });
     } catch (error) {
       console.error("Error updating business profile:", error);
-      return res
-        .status(500)
-        .json({
-          error: "Failed to update business profile",
-          details: error.message,
-        });
+      return res.status(500).json({
+        error: "Failed to update business profile",
+        details: error.message,
+      });
     }
   }
 );
