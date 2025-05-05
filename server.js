@@ -32,8 +32,8 @@ const { orderRoutes } = require("./routes/orderRouter");
 const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
-  "https://astrotalk-front-end.vercel.app"
-  // "http://localhost:3000"
+  "https://astrotalk-front-end.vercel.app",
+  "http://localhost:3000"
 ];
 
 
@@ -80,7 +80,7 @@ app.use(cors());
 
 // mongo db connection
 
-// connectMongoDb("mongodb://localhost:27017/chatting");
+connectMongoDb("mongodb://localhost:27017/chatting");
 
 connectMongoDb(
   "mongodb+srv://swapitshamsher:Eb25QUq9aEt27aSQ@astrologer.euynurr.mongodb.net/astrotalk?retryWrites=true&w=majority&appName=astrologer"
