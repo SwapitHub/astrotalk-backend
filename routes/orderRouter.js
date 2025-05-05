@@ -8,13 +8,12 @@ orderRoutes.post("/profile-order", async (req, res) => {
   const { userId, astrologerId, order, userName } = req.body;
 
   try {
-  
     const newOrder = new orderModel({
       userId,
       astrologerId,
       userName,
-      order,     
-      createdAt: new Date(), 
+      order,
+      createdAt: new Date(),
     });
 
     await newOrder.save();
@@ -23,8 +22,5 @@ orderRoutes.post("/profile-order", async (req, res) => {
     res.status(500).json({ message: "Error saving order", error });
   }
 });
-
-
-
 
 module.exports = { orderRoutes };
