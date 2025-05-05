@@ -27,6 +27,7 @@ const addProfessionRoute = require("./routes/addProfessionRouter");
 const adminCommissionRoute = require("./routes/adminCommissionRouter");
 const emailRouter = require("./routes/emailRouter");
 const { ratingRoutes } = require("./routes/ratingRouter");
+const { orderRoutes } = require("./routes/orderRouter");
 
 const app = express();
 const server = http.createServer(app);
@@ -102,6 +103,7 @@ app.use("/", addProfessionRoute);
 app.use("/", adminCommissionRoute);
 app.use("/", emailRouter);
 app.use("/", ratingRoutes);
+app.use("/", orderRoutes);
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);

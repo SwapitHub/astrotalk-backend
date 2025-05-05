@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const businessProfileAstrologer = require("../models/businessProfileAstrologerModel");
 const ratingModel = require("../models/ratingModel");
+const orderModel = require("../models/orderModel");
 const businessProfileRoute = express.Router();
 
 // multer for image upload start here
@@ -184,15 +185,22 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
           date: r.createdAt,
         }));
 
+   // 🔢 Get total order count
+   const orders = await orderModel.find({ astrologerId: profile._id });
+   const totalOrderCount = orders.reduce((sum, o) => sum + (o.order || 0), 0);
+
         return {
           ...profile.toObject(),
           averageRating: average.toFixed(1),
           totalReviews: ratings.length,
+          totalOrders: totalOrderCount,
           reviews: formattedRatings,
         };
       })
     );
 
+
+    
     // ✅ Step 5: Respond
     res.json({
       total,
