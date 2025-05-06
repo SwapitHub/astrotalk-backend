@@ -134,7 +134,10 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
       page = 1,
       limit = 10,
       freeChatStatus,
+      minAverageRating,
+      experienceLessThan
     } = req.query;
+console.log("experienceLessThan",experienceLessThan);
 
     // 🔍 Step 1: Build filter object
     const filter = {};
@@ -163,6 +166,9 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
       filter.freeChatStatus = freeChatStatus === "true"; // 🔥 Correct: convert "true" or "false" string to real boolean
     }
 
+    if (experienceLessThan) {
+      filter.experience = { $lt: parseInt(experienceLessThan) };
+    }
     // 🔃 Step 2: Build sort object
     let sort = {};
 
@@ -215,21 +221,37 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
 
         return {
           ...profile.toObject(),
-          averageRating: average.toFixed(1),
+          averageRating: average.toFixed(2),
           totalReviews: ratings.length,
           totalOrders: totalOrderCount,
           reviews: formattedRatings,
+          numericAverage: average, // used for filtering
         };
       })
     );
 
+
+     // Filter by average rating (after enrichment)
+  
+
+let finalProfiles = enrichedProfiles;
+
+if (minAverageRating && parseFloat(minAverageRating) >= 4.5) {
+  const avgFilter = parseFloat(minAverageRating);
+  finalProfiles = enrichedProfiles.filter(
+    (p) => p.numericAverage >= avgFilter
+  );
+}
+
+
     // ✅ Step 5: Respond
     res.json({
-      total,
+      total: finalProfiles.length,
       currentPage: parseInt(page),
-      totalPages: Math.ceil(total / limit),
-      profiles: enrichedProfiles,
+      totalPages: Math.ceil(finalProfiles.length / limit),
+      profiles: finalProfiles,
     });
+    
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
