@@ -167,8 +167,9 @@ console.log("experienceLessThan",experienceLessThan);
     }
 
     if (experienceLessThan) {
-      filter.experience = { $lt: parseInt(experienceLessThan) };
+      filter.experience = { $in: Array.from({ length: parseInt(experienceLessThan) }, (_, i) => i.toString()) };
     }
+    
     // 🔃 Step 2: Build sort object
     let sort = {};
 
