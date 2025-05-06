@@ -109,7 +109,7 @@ businessProfileRoute.get(
       // ✅ Response
       res.json({
         ...businessProfile.toObject(),
-        averageRating: average.toFixed(1),
+        averageRating: average.toFixed(2),
         totalReviews: ratings.length,
         totalOrders: totalOrderCount,
         reviews: formattedRatings,
