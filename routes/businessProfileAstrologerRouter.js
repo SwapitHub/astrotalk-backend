@@ -142,7 +142,6 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
       freeChatStatus,
       minAverageRating,
     } = req.query;
-    console.log("minAverageRating", minAverageRating);
 
     // 🔍 Step 1: Build filter object
     const filter = {};
@@ -164,11 +163,11 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
     }
 
     if (name) {
-      filter.name = { $regex: new RegExp(name, "i") }; // Case-insensitive search
+      filter.name = { $regex: new RegExp(name, "i") }; 
     }
 
     if (freeChatStatus !== undefined) {
-      filter.freeChatStatus = freeChatStatus === "true"; // 🔥 Correct: convert "true" or "false" string to real boolean
+      filter.freeChatStatus = freeChatStatus === "true"; 
     }
 
     // 🔃 Step 2: Build sort object
@@ -204,33 +203,60 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
     const enrichedProfiles = await Promise.all(
       profiles.map(async (profile) => {
         const ratings = await ratingModel.find({ astrologerId: profile._id });
-        const average =
-          ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length || 0;
-
+    
+        // Initialize rating counters
+        const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    
+        let totalRatingSum = 0;
+        ratings.forEach((r) => {
+          const val = r.rating;
+          if (ratingCounts[val] !== undefined) {
+            ratingCounts[val] += 1;
+          }
+          totalRatingSum += val;
+        });
+    
+        const totalRatings = ratings.length;
+        const average = totalRatings > 0 ? totalRatingSum / totalRatings : 0;
+    
+        // Optional: compute average per rating (though it would be the same as the value itself unless you need something else)
+        const averageRatings = {
+          averageRating_1: ratingCounts[1] ? (1).toFixed(2) : "0.00",
+          averageRating_2: ratingCounts[2] ? (2).toFixed(2) : "0.00",
+          averageRating_3: ratingCounts[3] ? (3).toFixed(2) : "0.00",
+          averageRating_4: ratingCounts[4] ? (4).toFixed(2) : "0.00",
+          averageRating_5: ratingCounts[5] ? (5).toFixed(2) : "0.00",
+        };
+    
+        // Attach detailed review info
         const formattedRatings = ratings.map((r) => ({
           rating: r.rating,
           userName: r.userName || "Anonymous",
           review: r.review || "",
           date: r.createdAt,
         }));
-
-        // 🔢 Get total order count
+    
+        // Get total order count
         const orders = await orderModel.find({ astrologerId: profile._id });
-        const totalOrderCount = orders.reduce(
-          (sum, o) => sum + (o.order || 0),
-          0
-        );
-
+        const totalOrderCount = orders.reduce((sum, o) => sum + (o.order || 0), 0);
+    
         return {
           ...profile.toObject(),
+          ...averageRatings,
+          totalRating_1: ratingCounts[1],
+          totalRating_2: ratingCounts[2],
+          totalRating_3: ratingCounts[3],
+          totalRating_4: ratingCounts[4],
+          totalRating_5: ratingCounts[5],
           averageRating: average.toFixed(2),
-          totalReviews: ratings.length,
+          numericAverage: average,
+          totalReviews: totalRatings,
           totalOrders: totalOrderCount,
           reviews: formattedRatings,
-          numericAverage: average, // used for filtering
         };
       })
     );
+    
 
     // Filter by average rating (after enrichment)
 
