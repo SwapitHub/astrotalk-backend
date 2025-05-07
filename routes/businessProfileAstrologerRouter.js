@@ -243,13 +243,13 @@ if (minAverageRating) {
     return categories.some((category) => {
       switch (category) {
         case "rising_star":
-          return p.numericAverage >= 4.5 && p.experience > 10;
+          return p.numericAverage >= 4.5 && p.experience < 10;
         case "celebrity":
           return p.numericAverage >= 4.6;
         case "top_choice":
           return p.numericAverage >= 4.7;
         case "All":
-          return true; // Include all if 'All' is selected
+          return true; 
         default:
           return false;
       }
