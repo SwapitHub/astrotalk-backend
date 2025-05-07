@@ -91,7 +91,9 @@ businessProfileRoute.get(
       }
 
       // ⭐ Fetch Ratings
-      const ratings = await ratingModel.find({ astrologerId: businessProfile._id });
+      const ratings = await ratingModel.find({
+        astrologerId: businessProfile._id,
+      });
       const average =
         ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length || 0;
 
@@ -103,8 +105,13 @@ businessProfileRoute.get(
       }));
 
       // 📦 Fetch Orders
-      const orders = await orderModel.find({ astrologerId: businessProfile._id });
-      const totalOrderCount = orders.reduce((sum, o) => sum + (o.order || 0), 0);
+      const orders = await orderModel.find({
+        astrologerId: businessProfile._id,
+      });
+      const totalOrderCount = orders.reduce(
+        (sum, o) => sum + (o.order || 0),
+        0
+      );
 
       // ✅ Response
       res.json({
@@ -121,7 +128,6 @@ businessProfileRoute.get(
   }
 );
 
-
 businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
   try {
     const {
@@ -135,9 +141,8 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
       limit = 10,
       freeChatStatus,
       minAverageRating,
-      experienceLessThan
     } = req.query;
-console.log("experienceLessThan",experienceLessThan);
+    console.log("minAverageRating", minAverageRating);
 
     // 🔍 Step 1: Build filter object
     const filter = {};
@@ -166,10 +171,6 @@ console.log("experienceLessThan",experienceLessThan);
       filter.freeChatStatus = freeChatStatus === "true"; // 🔥 Correct: convert "true" or "false" string to real boolean
     }
 
-    if (experienceLessThan) {
-      filter.experience = { $in: Array.from({ length: parseInt(experienceLessThan) }, (_, i) => i.toString()) };
-    }
-    
     // 🔃 Step 2: Build sort object
     let sort = {};
 
@@ -231,17 +232,29 @@ console.log("experienceLessThan",experienceLessThan);
       })
     );
 
+    // Filter by average rating (after enrichment)
 
-     // Filter by average rating (after enrichment)
-  
+    let finalProfiles = enrichedProfiles;
 
-let finalProfiles = enrichedProfiles;
+if (minAverageRating) {
+  const categories = minAverageRating.split(",");
 
-if (minAverageRating && parseFloat(minAverageRating) >= 4.5) {
-  const avgFilter = parseFloat(minAverageRating);
-  finalProfiles = enrichedProfiles.filter(
-    (p) => p.numericAverage >= avgFilter
-  );
+  finalProfiles = enrichedProfiles.filter((p) => {
+    return categories.some((category) => {
+      switch (category) {
+        case "rising_star":
+          return p.numericAverage >= 4.5 && p.experience > 10;
+        case "celebrity":
+          return p.numericAverage >= 4.6;
+        case "top_choice":
+          return p.numericAverage >= 4.7;
+        case "All":
+          return true; // Include all if 'All' is selected
+        default:
+          return false;
+      }
+    });
+  });
 }
 
 
@@ -252,7 +265,6 @@ if (minAverageRating && parseFloat(minAverageRating) >= 4.5) {
       totalPages: Math.ceil(finalProfiles.length / limit),
       profiles: finalProfiles,
     });
-    
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
