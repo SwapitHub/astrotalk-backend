@@ -94,8 +94,28 @@ businessProfileRoute.get(
       const ratings = await ratingModel.find({
         astrologerId: businessProfile._id,
       });
-      const average =
-        ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length || 0;
+
+      const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      let totalRatingSum = 0;
+
+      ratings.forEach((r) => {
+        const val = r.rating;
+        if (ratingCounts[val] !== undefined) {
+          ratingCounts[val] += 1;
+        }
+        totalRatingSum += val;
+      });
+
+      const totalRatings = ratings.length;
+      const average = totalRatings > 0 ? totalRatingSum / totalRatings : 0;
+
+      const averageRatings = {
+        averageRating_1: ratingCounts[1] ? (1).toFixed(2) : "0.00",
+        averageRating_2: ratingCounts[2] ? (2).toFixed(2) : "0.00",
+        averageRating_3: ratingCounts[3] ? (3).toFixed(2) : "0.00",
+        averageRating_4: ratingCounts[4] ? (4).toFixed(2) : "0.00",
+        averageRating_5: ratingCounts[5] ? (5).toFixed(2) : "0.00",
+      };
 
       const formattedRatings = ratings.map((r) => ({
         rating: r.rating,
@@ -113,11 +133,17 @@ businessProfileRoute.get(
         0
       );
 
-      // ✅ Response
+      // ✅ Final Response
       res.json({
         ...businessProfile.toObject(),
+        ...averageRatings,
+        totalRating_1: ratingCounts[1],
+        totalRating_2: ratingCounts[2],
+        totalRating_3: ratingCounts[3],
+        totalRating_4: ratingCounts[4],
+        totalRating_5: ratingCounts[5],
         averageRating: average.toFixed(2),
-        totalReviews: ratings.length,
+        totalReviews: totalRatings,
         totalOrders: totalOrderCount,
         reviews: formattedRatings,
       });
