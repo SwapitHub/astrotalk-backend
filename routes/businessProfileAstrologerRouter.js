@@ -403,8 +403,7 @@ businessProfileRoute.put(
         !parsedProfessions?.length ||
         !parsedLanguages?.length ||
         !experience ||
-        !charges ||
-        !Description ||
+        !charges ||        
         !country ||
         !gender
       ) {
