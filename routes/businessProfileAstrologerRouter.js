@@ -551,7 +551,7 @@ businessProfileRoute.post(
         !parsedLanguages?.length ||
         !experience ||
         !charges ||
-        !Description ||
+       
         !mobileNumber ||
         !req.file ||
         profileStatus === undefined ||
@@ -573,7 +573,9 @@ businessProfileRoute.post(
         languages: parsedLanguages,
         experience,
         charges,
-        Description,
+        Description:
+          Description ||
+          `${name}, a proficient Vedic Astrologer in India, is committed to helping clients in need with his spirit-guided readings. Upholding Astrology ethics, he focuses on bringing stability to lives. ${name} provides clarity and profound insights, empowering clients with spiritual knowledge about surrounding energies. Services cover Marriage Consultation, Career and Business, Love and Relationship, Wealth and Property, featuring easy and effective remedies.`,
         mobileNumber,
         profileImage: imageURL,
         profileStatus,
