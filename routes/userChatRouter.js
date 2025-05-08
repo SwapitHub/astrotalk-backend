@@ -3,6 +3,7 @@ const Chat = require("../models/userChatModels");
 const UserLogin = require("../models/userLoginModel");
 const WalletTransaction = require("../models/transactionsUserModel");
 const userIdSendToAstrologer = require("../models/userIdToAstrologerModel");
+const businessProfileAstrologer = require("../models/businessProfileAstrologerModel");
 
 const router = express.Router();
 
@@ -149,6 +150,7 @@ async function socketIoMessage(io) {
       console.log("chatTimeLeftDatas", chatTimeLeftData);
 
       if (chatTimeLeftData.totalChatTime > 0) {
+        const totalMinutes = Math.ceil(chatTimeLeftData.totalChatTime / 60);
         // Calculate how many 60-second intervals have passed
         // let intervals = Math.ceil(chatTimeLeftData.totalChatTime / 60); // 1-60 => 1, 61-120 => 2, 121-180 => 3...
         // let amount = intervals * chatTimeLeftData.astrologerChargePerMinute; // Subtract 10 for each interval
@@ -165,6 +167,11 @@ async function socketIoMessage(io) {
         if (!latestOrder) {
           return "User order history not found";
         }
+
+        await businessProfileAstrologer.updateOne(
+          { _id: chatTimeLeftData.astrologerId },
+          { $inc: { astroTotalChatTime: totalMinutes } }
+        );
 
         const user_order_history = await userIdSendToAstrologer.updateOne(
           { _id: latestOrder._id },
