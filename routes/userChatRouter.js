@@ -27,14 +27,47 @@ router.get("/transaction-data-astroLoger/:query", async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    // Calculate total available balance
+    // ✅ Calculate total available balance from transactionAmount
     const totalBalanceResult = await WalletTransaction.aggregate([
       { $match: { astroMobile: query } },
-      { $group: { _id: null, totalBalance: { $sum: "$availableBalance" } } },
+      {
+        $group: {
+          _id: null,
+          totalAvailableBalance: {
+            $sum: {
+              $toDouble: {
+                $trim: {
+                  input: {
+                    $replaceAll: {
+                      input: {
+                        $replaceAll: {
+                          input: {
+                            $replaceAll: {
+                              input: "$transactionAmount",
+                              find: "₹",
+                              replacement: "",
+                            },
+                          },
+                          find: "+",
+                          replacement: "",
+                        },
+                      },
+                      find: " ",
+                      replacement: "",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     ]);
 
     const totalAvailableBalance =
-      totalBalanceResult.length > 0 ? totalBalanceResult[0].totalBalance : 0;
+      totalBalanceResult.length > 0
+        ? totalBalanceResult[0].totalAvailableBalance
+        : 0;
 
     res.json({
       transactions,
@@ -45,6 +78,7 @@ router.get("/transaction-data-astroLoger/:query", async (req, res) => {
       totalAvailableBalance,
     });
   } catch (error) {
+    console.error("Failed to fetch transactions:", error);
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 });
@@ -155,9 +189,13 @@ async function socketIoMessage(io) {
         // let intervals = Math.ceil(chatTimeLeftData.totalChatTime / 60); // 1-60 => 1, 61-120 => 2, 121-180 => 3...
         // let amount = intervals * chatTimeLeftData.astrologerChargePerMinute; // Subtract 10 for each interval
         let amount = chatTimeLeftData.actualChargeUserChat;
-        console.log("totalamountrrr", typeof(chatTimeLeftData.updateAdminCommission));
+        console.log(
+          "totalamountrrr",
+          typeof chatTimeLeftData.updateAdminCommission
+        );
 
-        let adminCommission = (amount * chatTimeLeftData.updateAdminCommission) / 100;
+        let adminCommission =
+          (amount * chatTimeLeftData.updateAdminCommission) / 100;
         let astrologerEarnings = amount - adminCommission;
 
         const latestOrder = await userIdSendToAstrologer
