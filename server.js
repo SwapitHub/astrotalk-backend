@@ -33,6 +33,7 @@ const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
   "https://astrotalk-front-end.vercel.app",
+  "https://astrotalk-front-end-xj3n.vercel.app",
   "http://localhost:3000"
 ];
 
