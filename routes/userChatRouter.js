@@ -27,47 +27,14 @@ router.get("/transaction-data-astroLoger/:query", async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    // ✅ Calculate total available balance from transactionAmount
+    // Calculate total available balance
     const totalBalanceResult = await WalletTransaction.aggregate([
       { $match: { astroMobile: query } },
-      {
-        $group: {
-          _id: null,
-          totalAvailableBalance: {
-            $sum: {
-              $toDouble: {
-                $trim: {
-                  input: {
-                    $replaceAll: {
-                      input: {
-                        $replaceAll: {
-                          input: {
-                            $replaceAll: {
-                              input: "$transactionAmount",
-                              find: "₹",
-                              replacement: ""
-                            }
-                          },
-                          find: "+",
-                          replacement: ""
-                        }
-                      },
-                      find: " ",
-                      replacement: ""
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      { $group: { _id: null, totalBalance: { $sum: "$availableBalance" } } },
     ]);
-    
-    
 
     const totalAvailableBalance =
-      totalBalanceResult.length > 0 ? totalBalanceResult[0].totalAvailableBalance : 0;
+      totalBalanceResult.length > 0 ? totalBalanceResult[0].totalBalance : 0;
 
     res.json({
       transactions,
@@ -78,11 +45,9 @@ router.get("/transaction-data-astroLoger/:query", async (req, res) => {
       totalAvailableBalance,
     });
   } catch (error) {
-    console.error("Failed to fetch transactions:", error);
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 });
-
 
 router.get("/WalletTransactionData", async (req, res) => {
   try {
