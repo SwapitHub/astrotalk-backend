@@ -33,6 +33,7 @@ const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
   "https://astrotalk-front-end.vercel.app",
+  "https://splendorous-froyo-5521f3.netlify.app",
   "http://localhost:3000"
 ];
 

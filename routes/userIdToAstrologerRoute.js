@@ -145,7 +145,7 @@ async function socketUserIdToAstrologerMsg(io) {
     console.log("✅ Socket connected:", socket.id);
 
     socket.on("astrologer-chat-status", async (astrologerData) => {
-      console.log("🔔 astrologer-chat-statusd:", astrologerData);
+      console.log("🔔 astrologer-chat-status:", astrologerData);
 
       io.emit("astrologer-data-received-new-notification", {
         message: "You have a new chat request!",

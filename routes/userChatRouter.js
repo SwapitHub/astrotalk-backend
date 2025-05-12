@@ -181,7 +181,7 @@ async function socketIoMessage(io) {
     console.log("A user connected:", socket.id);
 
     socket.on("chat-timeLeft-update", async (chatTimeLeftData) => {
-      console.log("chatTimeLeftDatas", chatTimeLeftData);
+      console.log("chatTimeLeftDatass", chatTimeLeftData);
 
       if (chatTimeLeftData.totalChatTime > 0) {
         const totalMinutes = Math.ceil(chatTimeLeftData.totalChatTime / 60);
@@ -193,6 +193,10 @@ async function socketIoMessage(io) {
           "totalamountrrr",
           typeof chatTimeLeftData.updateAdminCommission
         );
+console.log("chatDuration:chatTimeL",
+   chatTimeLeftData.totalChatTime,
+               `${amount}`,
+);
 
         let adminCommission =
           (amount * chatTimeLeftData.updateAdminCommission) / 100;
