@@ -3,7 +3,7 @@ const AstrologerRegistration = require("../models/astrologerRegistrationModel");
 // ✅ Get List of Astrologers (Filter by astroStatus)
 const getAstrologerList = async (req, res, next) => {
   try {
-    const { astroStatus } = req.query;
+    const { astroStatus, page = 1, limit = 10 } = req.query;
 
     if (astroStatus === undefined) {
       return res
@@ -12,11 +12,30 @@ const getAstrologerList = async (req, res, next) => {
     }
 
     const statusFilter = astroStatus === "true";
-    const astrologers = await AstrologerRegistration.find({
+    const currentPage = parseInt(page);
+    const itemsPerPage = parseInt(limit);
+
+    const totalAstrologers = await AstrologerRegistration.countDocuments({
       astroStatus: statusFilter,
     });
 
-    res.status(200).json(astrologers);
+    const astrologers = await AstrologerRegistration.find({
+      astroStatus: statusFilter,
+    })
+      .sort({ createdAt: -1 })
+      .skip((currentPage - 1) * itemsPerPage)
+      .limit(itemsPerPage);
+
+    const totalPages = Math.ceil(totalAstrologers / itemsPerPage);
+
+    res.status(200).json({
+      astrologers,
+      totalAstrologers,
+      page: currentPage,
+      totalPages,
+      hasNextPage: currentPage < totalPages,
+      hasPrevPage: currentPage > 1,
+    });
   } catch (error) {
     next(error);
   }
@@ -35,8 +54,11 @@ const getAstrologerDetail = async (req, res, next) => {
     if (!astrologer) {
       return res.status(404).json({ error: "Astrologer not found" });
     }
-
-    res.status(200).json(astrologer);
+    res.status(200).json({
+      success: true,
+      message: "success",
+      data: astrologer,
+    });
   } catch (error) {
     next(error);
   }
@@ -44,8 +66,8 @@ const getAstrologerDetail = async (req, res, next) => {
 
 // ✅ Register New Astrologer
 const registerAstrologer = async (req, res, next) => {
-  console.log("req.body",req.body);
-  
+  console.log("req.body", req.body);
+
   try {
     const {
       name,

@@ -6,12 +6,34 @@ const AuthRoutes = express.Router();
 
 AuthRoutes.get("/user-login", async (req, res) => {
   try {
-    const loginUser = await UserLogin.find();
-    res.json(loginUser);
+    const page = parseInt(req.query.page) || 1; // current page
+    const limit = parseInt(req.query.limit) || 10; // items per page
+
+    const skip = (page - 1) * limit;
+
+    const totalUsers = await UserLogin.countDocuments();
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    const users = await UserLogin.find()    
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }); // optional: sort latest first
+
+    res.json({
+      users,
+      page,
+      limit,
+      totalUsers,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch user-login" });
+    console.error("Pagination error:", error);
+    res.status(500).json({ error: "Failed to fetch paginated user login data" });
   }
 });
+
 
 AuthRoutes.get("/user-login-detail/:query", async (req, res) => {
   try {
