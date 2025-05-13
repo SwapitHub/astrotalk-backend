@@ -158,7 +158,7 @@ async function socketUserIdToAstrologerMsg(io) {
       console.log("🔔 astrologer-chat-requestStatusd:", requestStatusData);
 
       io.emit("astrologer-requestStatus-new-notification", {
-        message: "You have a new chat request!",
+        message: "You have a new close request!",
         requestStatusData,
       });
     });
