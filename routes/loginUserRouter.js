@@ -51,7 +51,10 @@ AuthRoutes.get("/user-login-detail/:query", async (req, res) => {
       return res.status(404).json({ error: "Login detail not found" });
     }
 
-    res.json(loginUser);
+     res.status(200).json({
+      message: "success",
+      data: loginUser,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch user-login" });
