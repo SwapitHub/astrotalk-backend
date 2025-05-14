@@ -3,16 +3,18 @@ const nodemailer = require("nodemailer");
 const sendRegistrationSuccessEmail = async (email, astrologerName) => {
   try {
     const transporter = nodemailer.createTransport({
-      service: "Gmail", // or use SMTP config for Outlook, Yahoo, etc.
+      host: "smtp.hostinger.com", 
+      port: 465, 
+      secure: true, 
       auth: {
-        user: "swapit.testing@gmail.com", 
-        pass: "Swapit@123",
+        user: "info@demoprojectwork.com",
+        pass: "bQ|4TcE+Py1", 
       },
     });
 
     const mailOptions = {
-      from: `"Astro App" <${process.env.EMAIL_USER}>`,
-      to: email,
+      from: `"Astro App" <info@demoprojectwork.com>`, 
+      to: email, 
       subject: "Registration Successful 🎉",
       html: `
         <h2>Hello ${astrologerName},</h2>
