@@ -4,16 +4,16 @@ const emailRouter = express.Router();
 
 emailRouter.post("/send-registration-email", async (req, res) => {
   try {
-    const { email, name } = req.body;
+    const { email, name, mobile } = req.body;
 
     // Basic validation
-    if (!email || !name) {
-      return res.status(400).json({ message: "Email and name are required." });
+    if (!email || !name || !mobile) {
+      return res.status(400).json({ message: "Email, mobile and name are required." });
     }
 
-    console.log("Sending registration email to:", email, "Name:", name);
+    console.log("Sending registration email to:", email, "Name:", name, mobile);
 
-    const result = await sendRegistrationSuccessEmail(email, name);
+    const result = await sendRegistrationSuccessEmail(email, name, mobile);
 
     if (result.success) {
       console.log("✅ Email sent successfully");
