@@ -20,11 +20,9 @@ userIdAstRoute.put(
       // Update DeleteOrderHistoryStatus by ID
       if (DeleteOrderHistoryStatus !== undefined) {
         if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-          return res
-            .status(400)
-            .json({
-              error: "Valid user ID required for DeleteOrderHistoryStatus",
-            });
+          return res.status(400).json({
+            error: "Valid user ID required for DeleteOrderHistoryStatus",
+          });
         }
 
         const deleteStatusUpdate =
@@ -100,7 +98,7 @@ userIdAstRoute.get(
       const astrologers = await userIdSendToAstrologer
         .find({ userIdToAst: req.params.userIdToAst })
         .skip(skip)
-        .sort({ _id: -1 }) 
+        .sort({ _id: -1 })
         .limit(parseInt(limit));
 
       const total = await userIdSendToAstrologer.countDocuments({
@@ -153,7 +151,6 @@ async function socketUserIdToAstrologerMsg(io) {
       });
     });
 
-
     socket.on("astrologer-chat-requestStatus", async (requestStatusData) => {
       console.log("🔔 astrologer-chat-requestStatusd:", requestStatusData);
 
@@ -172,6 +169,14 @@ async function socketUserIdToAstrologerMsg(io) {
       });
     });
 
+     socket.on("astrologer-chat-request-FreeChat", async (requestStatusFreeChat) => {
+      console.log("🔔 astrologer-chat-request-FreeChat", requestStatusFreeChat);
+
+      io.emit("astrologer-request-FreeChat-new-notification", {
+        message: "You have a new free chat request!",
+        requestStatusFreeChat,
+      });
+    });
 
     socket.on("userId-to-astrologer", async (messageId) => {
       console.log("📩 Received messageIds:", messageId);
@@ -198,7 +203,7 @@ async function socketUserIdToAstrologerMsg(io) {
           userDateOfBirth,
           userPlaceOfBorn,
           userBornTime,
-          requestStatus
+          requestStatus,
         } = messageId;
 
         // 🚨 Field validation
@@ -263,7 +268,7 @@ async function socketUserIdToAstrologerMsg(io) {
           userPlaceOfBorn,
           userBornTime,
           request_id: newUserIdToAst._id,
-          requestStatus
+          requestStatus,
         });
 
         console.log(

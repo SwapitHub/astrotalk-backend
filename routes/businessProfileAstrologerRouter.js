@@ -189,50 +189,53 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
     }
 
     if (name) {
-      filter.name = { $regex: new RegExp(name, "i") }; 
+      filter.name = { $regex: new RegExp(name, "i") };
     }
 
     if (freeChatStatus !== undefined) {
-      filter.freeChatStatus = freeChatStatus === "true"; 
+      filter.freeChatStatus = freeChatStatus === "true";
     }
 
-    // 🔃 Step 2: Build sort object
-    let sort = {};
-
-    switch (sortby) {
-      case "charges_high_to_low":
-        sort.charges = -1;
-        break;
-      case "charges_low_to_high":
-        sort.charges = 1;
-        break;
-      case "experience_high_to_low":
-        sort.experience = -1;
-        break;
-      case "experience_low_to_high":
-        sort.experience = 1;
-        break;
-    }
-
-    // 🔄 Step 3: Pagination calculations
+    // 🔄 Step 2: Fetch unsorted, paginated data
     const skip = (parseInt(page) - 1) * parseInt(limit);
+    const totalDocs = await businessProfileAstrologer.countDocuments(filter);
 
-    // 📄 Step 4: Query with filter, sort, and pagination
-    const total = await businessProfileAstrologer.countDocuments(filter);
-    const profiles = await businessProfileAstrologer
+    let profiles = await businessProfileAstrologer
       .find(filter)
-      .sort(sort)
       .skip(skip)
       .limit(parseInt(limit));
+
+    // 🔃 Step 3: Convert and sort in JS
+    if (sortby) {
+      profiles = profiles.sort((a, b) => {
+        const expA = parseFloat(a.experience) || 0;
+        const expB = parseFloat(b.experience) || 0;
+        const chargesA = parseFloat(a.charges) || 0;
+        const chargesB = parseFloat(b.charges) || 0;
+
+        switch (sortby.toLowerCase()) {
+          case "experience_high_to_low":
+            return expB - expA;
+          case "experience_low_to_high":
+            return expA - expB;
+          case "charges_high_to_low":
+            return chargesB - chargesA;
+          case "charges_low_to_high":
+            return chargesA - chargesB;
+          default:
+            return 0;
+        }
+      });
+    }
 
     // 🌟 Step 5: Attach average rating and total reviews
     const enrichedProfiles = await Promise.all(
       profiles.map(async (profile) => {
         const ratings = await ratingModel.find({ astrologerId: profile._id });
-    
+
         // Initialize rating counters
         const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    
+
         let totalRatingSum = 0;
         ratings.forEach((r) => {
           const val = r.rating;
@@ -241,10 +244,10 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
           }
           totalRatingSum += val;
         });
-    
+
         const totalRatings = ratings.length;
         const average = totalRatings > 0 ? totalRatingSum / totalRatings : 0;
-    
+
         // Optional: compute average per rating (though it would be the same as the value itself unless you need something else)
         const averageRatings = {
           averageRating_1: ratingCounts[1] ? (1).toFixed(2) : "0.00",
@@ -253,7 +256,7 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
           averageRating_4: ratingCounts[4] ? (4).toFixed(2) : "0.00",
           averageRating_5: ratingCounts[5] ? (5).toFixed(2) : "0.00",
         };
-    
+
         // Attach detailed review info
         const formattedRatings = ratings.map((r) => ({
           rating: r.rating,
@@ -261,11 +264,14 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
           review: r.review || "",
           date: r.createdAt,
         }));
-    
+
         // Get total order count
         const orders = await orderModel.find({ astrologerId: profile._id });
-        const totalOrderCount = orders.reduce((sum, o) => sum + (o.order || 0), 0);
-    
+        const totalOrderCount = orders.reduce(
+          (sum, o) => sum + (o.order || 0),
+          0
+        );
+
         return {
           ...profile.toObject(),
           ...averageRatings,
@@ -282,33 +288,31 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
         };
       })
     );
-    
 
     // Filter by average rating (after enrichment)
 
     let finalProfiles = enrichedProfiles;
 
-if (minAverageRating) {
-  const categories = minAverageRating.split(",");
+    if (minAverageRating) {
+      const categories = minAverageRating.split(",");
 
-  finalProfiles = enrichedProfiles.filter((p) => {
-    return categories.some((category) => {
-      switch (category) {
-        case "rising_star":
-          return p.numericAverage >= 4.5 && p.experience < 10;
-        case "celebrity":
-          return p.numericAverage >= 4.6;
-        case "top_choice":
-          return p.numericAverage >= 4.7;
-        case "All":
-          return true; 
-        default:
-          return false;
-      }
-    });
-  });
-}
-
+      finalProfiles = enrichedProfiles.filter((p) => {
+        return categories.some((category) => {
+          switch (category) {
+            case "rising_star":
+              return p.numericAverage >= 4.5 && p.experience < 10;
+            case "celebrity":
+              return p.numericAverage >= 4.6;
+            case "top_choice":
+              return p.numericAverage >= 4.7;
+            case "All":
+              return true;
+            default:
+              return false;
+          }
+        });
+      });
+    }
 
     // ✅ Step 5: Respond
     res.json({
@@ -403,7 +407,7 @@ businessProfileRoute.put(
         !parsedProfessions?.length ||
         !parsedLanguages?.length ||
         !experience ||
-        !charges ||        
+        !charges ||
         !country ||
         !gender
       ) {
@@ -550,7 +554,6 @@ businessProfileRoute.post(
         !parsedLanguages?.length ||
         !experience ||
         !charges ||
-       
         !mobileNumber ||
         !req.file ||
         profileStatus === undefined ||
