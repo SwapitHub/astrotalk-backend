@@ -19,7 +19,8 @@ const businessProfileAstrologerSchema = new mongoose.Schema({
   offers: String,
   freeChatStatus: Boolean,
   requestStatus: Boolean,
-  astroTotalChatTime: Number
+  astroTotalChatTime: Number,
+  topAstrologer: String,
 });
 
 const businessProfileAstrologer = mongoose.model("businessProfileAstrologer" , businessProfileAstrologerSchema)

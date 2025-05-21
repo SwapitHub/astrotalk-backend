@@ -193,10 +193,11 @@ async function socketIoMessage(io) {
           "totalamountrrr",
           typeof chatTimeLeftData.updateAdminCommission
         );
-console.log("chatDuration:chatTimeL",
-   chatTimeLeftData.totalChatTime,
-               `${amount}`,
-);
+        console.log(
+          "chatDuration:chatTimeL",
+          chatTimeLeftData.totalChatTime,
+          `${amount}`
+        );
 
         let adminCommission =
           (amount * chatTimeLeftData.updateAdminCommission) / 100;

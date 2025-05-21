@@ -229,62 +229,59 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
     }
 
     // 🌟 Step 5: Attach average rating and total reviews
+
     const enrichedProfiles = await Promise.all(
       profiles.map(async (profile) => {
         const ratings = await ratingModel.find({ astrologerId: profile._id });
 
-        // Initialize rating counters
         const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-
         let totalRatingSum = 0;
         ratings.forEach((r) => {
-          const val = r.rating;
-          if (ratingCounts[val] !== undefined) {
-            ratingCounts[val] += 1;
-          }
-          totalRatingSum += val;
+          if (ratingCounts[r.rating] !== undefined) ratingCounts[r.rating]++;
+          totalRatingSum += r.rating;
         });
 
         const totalRatings = ratings.length;
         const average = totalRatings > 0 ? totalRatingSum / totalRatings : 0;
+        const numericAverage = average;
+        const experience = parseFloat(profile.experience || "0");
+        const totalOrders = await orderModel.countDocuments({
+          astrologerId: profile._id,
+        });
+        // 🔍 Determine topAstrologer tag
+        let topAstrologer = "";
+        if (numericAverage >= 4.5 && experience < 10) {
+          topAstrologer = "rising_star";
+        } else if (numericAverage >= 4.7 && totalOrders >= 14) {
+          topAstrologer = "top_choice";
+        } else if (numericAverage >= 4.6 && experience > 15) {
+          topAstrologer = "celebrity";
+        }
 
-        // Optional: compute average per rating (though it would be the same as the value itself unless you need something else)
-        const averageRatings = {
-          averageRating_1: ratingCounts[1] ? (1).toFixed(2) : "0.00",
-          averageRating_2: ratingCounts[2] ? (2).toFixed(2) : "0.00",
-          averageRating_3: ratingCounts[3] ? (3).toFixed(2) : "0.00",
-          averageRating_4: ratingCounts[4] ? (4).toFixed(2) : "0.00",
-          averageRating_5: ratingCounts[5] ? (5).toFixed(2) : "0.00",
-        };
-
-        // Attach detailed review info
-        const formattedRatings = ratings.map((r) => ({
-          rating: r.rating,
-          userName: r.userName || "Anonymous",
-          review: r.review || "",
-          date: r.createdAt,
-        }));
-
-        // Get total order count
-        const orders = await orderModel.find({ astrologerId: profile._id });
-        const totalOrderCount = orders.reduce(
-          (sum, o) => sum + (o.order || 0),
-          0
-        );
+        // Optionally: save this back to DB
+        profile.topAstrologer = topAstrologer;
+        await profile.save();
 
         return {
           ...profile.toObject(),
-          ...averageRatings,
+          topAstrologer, // include in response
+          averageRating: average.toFixed(2),
+          numericAverage,
+          totalReviews: totalRatings,
+          totalOrders: await orderModel.countDocuments({
+            astrologerId: profile._id,
+          }),
           totalRating_1: ratingCounts[1],
           totalRating_2: ratingCounts[2],
           totalRating_3: ratingCounts[3],
           totalRating_4: ratingCounts[4],
           totalRating_5: ratingCounts[5],
-          averageRating: average.toFixed(2),
-          numericAverage: average,
-          totalReviews: totalRatings,
-          totalOrders: totalOrderCount,
-          reviews: formattedRatings,
+          reviews: ratings.map((r) => ({
+            rating: r.rating,
+            userName: r.userName || "Anonymous",
+            review: r.review || "",
+            date: r.createdAt,
+          })),
         };
       })
     );
@@ -298,17 +295,16 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
 
       finalProfiles = enrichedProfiles.filter((p) => {
         return categories.some((category) => {
-          switch (category) {
-            case "rising_star":
-              return p.numericAverage >= 4.5 && p.experience < 10;
-            case "celebrity":
-              return p.numericAverage >= 4.6;
-            case "top_choice":
-              return p.numericAverage >= 4.7;
-            case "All":
-              return true;
-            default:
-              return false;
+          if (category === "rising_star") {
+            return p.numericAverage >= 4.5 && p.experience < 10;
+          } else if (category === "top_choice") {
+            return p.numericAverage >= 4.7 && p.totalOrders >= 14;
+          } else if (category === "celebrity") {
+            return p.numericAverage >= 4.6 && p.experience > 15;
+          } else if (category === "All") {
+            return true;
+          } else {
+            return false;
           }
         });
       });
