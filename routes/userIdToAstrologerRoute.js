@@ -169,20 +169,14 @@ async function socketUserIdToAstrologerMsg(io) {
       });
     });
 
-    socket.on(
-      "astrologer-chat-request-FreeChat",
-      async (requestStatusFreeChat) => {
-        console.log(
-          "🔔 astrologer-chat-request-FreeChat",
-          requestStatusFreeChat
-        );
+     socket.on("astrologer-chat-request-FreeChat", async (requestStatusFreeChat) => {
+      console.log("🔔 astrologer-chat-request-FreeChat", requestStatusFreeChat);
 
-        io.emit("astrologer-request-FreeChat-new-notification", {
-          message: "You have a new free chat request!",
-          requestStatusFreeChat,
-        });
-      }
-    );
+      io.emit("astrologer-request-FreeChat-new-notification", {
+        message: "You have a new free chat request!",
+        requestStatusFreeChat,
+      });
+    });
 
     socket.on("userId-to-astrologer", async (messageId) => {
       console.log("📩 Received messageIds:", messageId);

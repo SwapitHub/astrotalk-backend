@@ -85,7 +85,7 @@ router.get("/transaction-data-astroLoger/:query", async (req, res) => {
 
 router.get("/WalletTransactionData", async (req, res) => {
   try {
-    let { type, page, limit, user_id } = req.query;
+    let { type, page, limit, user_id, search } = req.query;
     page = parseInt(page) || 1;
     limit = parseInt(limit) || 10;
     const skip = (page - 1) * limit;
@@ -107,6 +107,19 @@ router.get("/WalletTransactionData", async (req, res) => {
     const filter = { type };
     if (user_id) {
       filter.user_id = user_id; // Add user_id filter if provided
+    }
+
+
+     // 🔍 Add search filter
+    if (search && search.trim() !== "") {
+      const searchRegex = new RegExp(search, "i");
+
+      filter.$or = [
+        { name: searchRegex },
+        { userName: searchRegex },
+        { description: searchRegex },
+        { astroMobile: searchRegex }, // ✅ Matches mobile number
+      ];
     }
 
     // Get total count of transactions for pagination metadata
