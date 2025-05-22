@@ -379,8 +379,7 @@ businessProfileRoute.put(
   async (req, res) => {
     try {
       const { mobileNumber } = req.params;
-
-      const {
+      let {
         name,
         professions,
         languages,
@@ -391,40 +390,26 @@ businessProfileRoute.put(
         gender,
       } = req.body;
 
-      // Parse if needed (in case frontend sends them as strings)
-      const parsedLanguages =
-        typeof languages === "string" ? JSON.parse(languages) : languages;
-      const parsedProfessions =
-        typeof professions === "string" ? JSON.parse(professions) : professions;
+      const updateData = {};
 
-      // Validation (only for required fields you want in updates — relax if partial updates are allowed)
-      if (
-        !name ||
-        !parsedProfessions?.length ||
-        !parsedLanguages?.length ||
-        !experience ||
-        !charges ||
-        !country ||
-        !gender
-      ) {
-        return res
-          .status(400)
-          .json({ error: "All fields are required except mobileNumber" });
+      if (name) updateData.name = name;
+
+      if (professions) {
+        updateData.professions =
+          typeof professions === "string" ? JSON.parse(professions) : professions;
       }
 
-      // Prepare update data
-      const updateData = {
-        name,
-        professions: parsedProfessions,
-        languages: parsedLanguages,
-        experience,
-        charges,
-        Description,
-        country,
-        gender,
-      };
+      if (languages) {
+        updateData.languages =
+          typeof languages === "string" ? JSON.parse(languages) : languages;
+      }
 
-      // Handle optional image upload
+      if (experience) updateData.experience = experience;
+      if (charges) updateData.charges = charges;
+      if (Description) updateData.Description = Description;
+      if (country) updateData.country = country;
+      if (gender) updateData.gender = gender;
+
       if (req.file) {
         updateData.profileImage = `/uploads/${req.file.filename}`;
       }
@@ -449,6 +434,7 @@ businessProfileRoute.put(
     }
   }
 );
+
 
 businessProfileRoute.put(
   "/update-business-profile/:mobileNumber",
