@@ -1,6 +1,7 @@
 const express = require("express");
 const userIdSendToAstrologer = require("../models/userIdToAstrologerModel");
 const { default: mongoose } = require("mongoose");
+const UserLogin = require("../models/userLoginModel");
 
 const userIdAstRoute = express.Router();
 
@@ -169,14 +170,20 @@ async function socketUserIdToAstrologerMsg(io) {
       });
     });
 
-     socket.on("astrologer-chat-request-FreeChat", async (requestStatusFreeChat) => {
-      console.log("🔔 astrologer-chat-request-FreeChat", requestStatusFreeChat);
+    socket.on(
+      "astrologer-chat-request-FreeChat",
+      async (requestStatusFreeChat) => {
+        console.log(
+          "🔔 astrologer-chat-request-FreeChat",
+          requestStatusFreeChat
+        );
 
-      io.emit("astrologer-request-FreeChat-new-notification", {
-        message: "You have a new free chat request!",
-        requestStatusFreeChat,
-      });
-    });
+        io.emit("astrologer-request-FreeChat-new-notification", {
+          message: "You have a new free chat request!",
+          requestStatusFreeChat,
+        });
+      }
+    );
 
     socket.on("userId-to-astrologer", async (messageId) => {
       console.log("📩 Received messageIds:", messageId);
@@ -250,7 +257,10 @@ async function socketUserIdToAstrologerMsg(io) {
         });
 
         await newUserIdToAst.save();
-
+        await UserLogin.findByIdAndUpdate(userIdToAst, {
+          $set: { chatStatus: true },
+        });
+        console.log(`✅ Updated chatStatus: true for userId ${userIdToAst}`);
         // ✅ Acknowledge success
         socket.emit("userId-to-astrologer-success", {
           message: "success",

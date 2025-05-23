@@ -132,7 +132,8 @@ AuthRoutes.post("/user-login", async (req, res) => {
       language,
       phone,
       totalAmount,
-      freeChatStatus
+      freeChatStatus,
+      chatStatus: false
     });
 
     await newUser.save();
