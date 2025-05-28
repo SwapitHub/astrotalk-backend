@@ -143,6 +143,16 @@ async function socketUserIdToAstrologerMsg(io) {
   io.on("connection", (socket) => {
     console.log("✅ Socket connected:", socket.id);
 
+    socket.on("typing", (data) => {
+      socket.broadcast.emit("typing", data);
+      // console.log(data, "typings");
+
+      io.emit("typing-status", {
+        message: "You have a new typing!",
+        data,
+      });
+    });
+
     socket.on("astrologer-chat-status", async (astrologerData) => {
       console.log("🔔 astrologer-chat-status:", astrologerData);
 
