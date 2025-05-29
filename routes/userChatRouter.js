@@ -4,7 +4,11 @@ const UserLogin = require("../models/userLoginModel");
 const WalletTransaction = require("../models/transactionsUserModel");
 const userIdSendToAstrologer = require("../models/userIdToAstrologerModel");
 const businessProfileAstrologer = require("../models/businessProfileAstrologerModel");
-const { getTransactionData, getWalletTransactionData, getDetailData } = require("../controllers/userChatController");
+const {
+  getTransactionData,
+  getWalletTransactionData,
+  getDetailData,
+} = require("../controllers/userChatController");
 
 const router = express.Router();
 
@@ -38,7 +42,8 @@ async function socketIoMessage(io) {
         // let amount = intervals * chatTimeLeftData.astrologerChargePerMinute; // Subtract 10 for each interval
         let amount = chatTimeLeftData.actualChargeUserChat;
         console.log(
-          "totalamountrrr",chatTimeLeftData.updateAdminCommission,
+          "totalamountrrr",
+          chatTimeLeftData.updateAdminCommission,
           typeof chatTimeLeftData.updateAdminCommission
         );
         console.log(
@@ -107,13 +112,13 @@ async function socketIoMessage(io) {
         try {
           const lastTransaction = await WalletTransaction.findOne({
             type: "astrologer",
+            astrologer_id: chatTimeLeftData.astrologerId,
           }).sort({ createdAt: -1 });
 
           const previousBalance = lastTransaction
             ? lastTransaction.availableBalance
             : 0;
           const newBalance = previousBalance + astrologerEarnings;
-console.log(newBalance,"newBalance");
 
           const astrologerTransaction = new WalletTransaction({
             type: "astrologer",
