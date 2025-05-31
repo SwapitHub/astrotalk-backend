@@ -37,7 +37,6 @@ const allowedOrigins = [
   "http://localhost:3000"
 ];
 
-
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
