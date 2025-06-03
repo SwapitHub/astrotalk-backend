@@ -15,7 +15,7 @@ const businessProfileAstrologerSchema = new mongoose.Schema({
   country: String,
   gender: String,
   starRating: String,
-  orders: String,
+  totalOrders: { type: Number, default: 0 },
   offers: String,
   freeChatStatus: Boolean,
   requestStatus: Boolean,

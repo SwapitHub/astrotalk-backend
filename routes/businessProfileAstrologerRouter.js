@@ -205,29 +205,6 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit));
 
-    // 🔃 Step 3: Convert and sort in JS
-    if (sortby) {
-      profiles = profiles.sort((a, b) => {
-        const expA = parseFloat(a.experience) || 0;
-        const expB = parseFloat(b.experience) || 0;
-        const chargesA = parseFloat(a.charges) || 0;
-        const chargesB = parseFloat(b.charges) || 0;
-
-        switch (sortby.toLowerCase()) {
-          case "experience_high_to_low":
-            return expB - expA;
-          case "experience_low_to_high":
-            return expA - expB;
-          case "charges_high_to_low":
-            return chargesB - chargesA;
-          case "charges_low_to_high":
-            return chargesA - chargesB;
-          default:
-            return 0;
-        }
-      });
-    }
-
     // 🌟 Step 5: Attach average rating and total reviews
 
     const enrichedProfiles = await Promise.all(
@@ -307,6 +284,35 @@ businessProfileRoute.get("/astrologer-businessProfile", async (req, res) => {
             return false;
           }
         });
+      });
+    }
+
+    // 🔃 Step 3: Convert and sort in JS
+    if (sortby) {
+      finalProfiles = finalProfiles.sort((a, b) => {
+        const expA = parseFloat(a.experience) || 0;
+        const expB = parseFloat(b.experience) || 0;
+        const chargesA = parseFloat(a.charges) || 0;
+        const chargesB = parseFloat(b.charges) || 0;
+        const ordersA = parseFloat(a.totalOrders) || 0;
+        const ordersB = parseFloat(b.totalOrders) || 0;
+
+        switch (sortby.toLowerCase()) {
+          case "experience_high_to_low":
+            return expB - expA;
+          case "experience_low_to_high":
+            return expA - expB;
+          case "charges_high_to_low":
+            return chargesB - chargesA;
+          case "charges_low_to_high":
+            return chargesA - chargesB;
+          case "order_high_to_low":
+            return ordersB - ordersA;
+          case "order_low_to_high":
+            return ordersA - ordersB;
+          default:
+            return 0;
+        }
       });
     }
 
@@ -396,7 +402,9 @@ businessProfileRoute.put(
 
       if (professions) {
         updateData.professions =
-          typeof professions === "string" ? JSON.parse(professions) : professions;
+          typeof professions === "string"
+            ? JSON.parse(professions)
+            : professions;
       }
 
       if (languages) {
@@ -434,7 +442,6 @@ businessProfileRoute.put(
     }
   }
 );
-
 
 businessProfileRoute.put(
   "/update-business-profile/:mobileNumber",
