@@ -578,6 +578,7 @@ businessProfileRoute.post(
         offers,
         freeChatStatus,
         requestStatus,
+        completeProfile : true
       });
 
       await newBusinessProfile.save();

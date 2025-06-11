@@ -28,8 +28,13 @@ const adminCommissionRoute = require("./routes/adminCommissionRouter");
 const emailRouter = require("./routes/emailRouter");
 const { ratingRoutes } = require("./routes/ratingRouter");
 const { orderRoutes } = require("./routes/orderRouter");
+const helmet = require("helmet");
+
 
 const app = express();
+// secure API use helmet call
+app.use(helmet());
+
 const server = http.createServer(app);
 const allowedOrigins = [
   "https://astrotalk-front-end.vercel.app",
