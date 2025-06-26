@@ -2,15 +2,37 @@ const AddGallery = require("../models/addGalleryModel");
 const cloudinary = require("../config/cloudinary");
 
 
-const getGalleryAstrologer = async (req, res)=>{
- try{
-    const getGallery = await AddGallery.find();
-    res.json(getGallery);
- }
- catch(err){
-    res.status(500).json({message: err.message || "gallery data not found"})
- }
-}
+const getGalleryByAstroOrMobile = async (req, res) => {
+    console.log(req,"req.query");
+    
+  try {
+    const { nameAstro, mobileNumber } = req.query;
+
+    if (!nameAstro && !mobileNumber) {
+      return res.status(400).json({ message: "Provide either nameAstro or mobileNumber" });
+    }
+
+    const query = [];
+
+    if (nameAstro) {
+      query.push({ nameAstro: nameAstro });
+    }
+    if (mobileNumber) {
+      query.push({ mobileNumber: mobileNumber });
+    }
+
+    const galleryData = await AddGallery.find({ $or: query });
+
+    if (!galleryData.length) {
+      return res.status(404).json({ message: "No gallery data found for the given inputs" });
+    }
+
+    res.json(galleryData);
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Server error while retrieving gallery" });
+  }
+};
+
 
 const deleteGalleryAstrologer = async (req, res) => {
   try {
@@ -59,23 +81,24 @@ const postGalleryAstrologer = async (req, res) => {
       cloudinary_id: file.filename,
     }));
 
-    // Step 1: Check if any gallery exists (you can customize this with user ID or astrologer ID)
-    let gallery = await AddGallery.findOne();
+    const { nameAstro, mobileNumber } = req.body;
+
+    // Optional: Check if gallery for this astrologer already exists
+    let gallery = await AddGallery.findOne({ mobileNumber });
 
     if (gallery) {
-      // Step 2: If exists, push to existing gallery
       gallery.multipleImages.push(...newImages);
       await gallery.save();
     } else {
-      // Step 3: If not, create new gallery
-      gallery = new AddGallery({ multipleImages: newImages });
+      gallery = new AddGallery({
+        nameAstro,
+        mobileNumber,
+        multipleImages: newImages,
+      });
       await gallery.save();
-    }
+    }   
 
-    res.status(200).json({
-      message: "success",
-      data: gallery,
-    });
+    res.status(200).json({ message: "success", data: gallery });
   } catch (err) {
     console.error("Upload error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
@@ -84,8 +107,9 @@ const postGalleryAstrologer = async (req, res) => {
 
 
 
+
 module.exports = {
-    getGalleryAstrologer,
+    getGalleryByAstroOrMobile,
     deleteGalleryAstrologer,
     postGalleryAstrologer
 }

@@ -532,7 +532,7 @@ const postAstrologerProfile = async (req, res) => {
       freeChatStatus,
       requestStatus,
       completeProfile: true,
-      cloudinary_id: req.file.filename
+      cloudinary_id: req.file.filename || ""
     });
 
     await newBusinessProfile.save();
