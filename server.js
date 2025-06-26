@@ -28,6 +28,7 @@ const adminCommissionRoute = require("./routes/adminCommissionRouter");
 const emailRouter = require("./routes/emailRouter");
 const { ratingRoutes } = require("./routes/ratingRouter");
 const { orderRoutes } = require("./routes/orderRouter");
+const addGalleryRoute = require("./routes/addGalleryRouter");
 const helmet = require("helmet");
 
 
@@ -111,6 +112,7 @@ app.use("/", adminCommissionRoute);
 app.use("/", emailRouter);
 app.use("/", ratingRoutes);
 app.use("/", orderRoutes);
+app.use("/", addGalleryRoute);
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);

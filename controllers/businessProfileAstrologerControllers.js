@@ -370,18 +370,15 @@ const putAstrologerProfileUpdate = async (req, res) => {
     const existingProfile = await businessProfileAstrologer.findOne({
       mobileNumber,
     });
-console.log("existingProfile",existingProfile);
 
     if (!existingProfile) {
       return res.status(404).json({ error: "Astrologer profile not found" });
     }
     if (req.file) {
-      // delete old image if cloudinary_id exists
       if (existingProfile.cloudinary_id) {
         await cloudinary.uploader.destroy(existingProfile.cloudinary_id);
       }
 
-      // Save new image URL and public_id
       updateData.profileImage = req.file.path;
       updateData.cloudinary_id = req.file.filename;
     }
@@ -464,6 +461,8 @@ const putAstrologerBusesProfileUpdate = async (req, res) => {
 };
 
 const postAstrologerProfile = async (req, res) => {
+  console.log("filename",req.file);
+  
   try {
     const {
       name,
@@ -533,6 +532,7 @@ const postAstrologerProfile = async (req, res) => {
       freeChatStatus,
       requestStatus,
       completeProfile: true,
+      cloudinary_id: req.file.filename
     });
 
     await newBusinessProfile.save();
