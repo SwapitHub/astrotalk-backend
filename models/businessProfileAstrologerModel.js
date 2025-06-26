@@ -21,7 +21,8 @@ const businessProfileAstrologerSchema = new mongoose.Schema({
   requestStatus: Boolean,
   astroTotalChatTime: Number,
   topAstrologer: String,
-  completeProfile: Boolean
+  completeProfile: Boolean,
+  cloudinary_id: String
 });
 
 const businessProfileAstrologer = mongoose.model("businessProfileAstrologer" , businessProfileAstrologerSchema)

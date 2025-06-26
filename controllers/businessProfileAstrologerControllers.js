@@ -5,117 +5,111 @@ const fs = require("fs");
 const businessProfileAstrologer = require("../models/businessProfileAstrologerModel");
 const ratingModel = require("../models/ratingModel");
 const orderModel = require("../models/orderModel");
-
-
+const cloudinary = require("../config/cloudinary");
 
 const getAstrologerProfile = async (req, res) => {
-    try {
-      const freeChatAstrologers = await businessProfileAstrologer.find({
-        freeChatStatus: true,
-      });
+  try {
+    const freeChatAstrologers = await businessProfileAstrologer.find({
+      freeChatStatus: true,
+    });
 
-      // Just send back empty array if no data found
-      res.status(200).json({
-        message: "success",
-        data: freeChatAstrologers,
-      });
-    } catch (error) {
-      console.error("Error fetching free chat astrologers:", error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
+    // Just send back empty array if no data found
+    res.status(200).json({
+      message: "success",
+      data: freeChatAstrologers,
+    });
+  } catch (error) {
+    console.error("Error fetching free chat astrologers:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
+};
 
+const getAstrologerProfileRating = async (req, res) => {
+  try {
+    const { query } = req.params;
 
-  const getAstrologerProfileRating =  async (req, res) => {
-    try {
-      const { query } = req.params;
+    let businessProfile;
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(query);
 
-      let businessProfile;
-      const isObjectId = /^[0-9a-fA-F]{24}$/.test(query);
-
-      if (isObjectId) {
-        businessProfile = await businessProfileAstrologer.findById(query);
-      } else {
-        businessProfile = await businessProfileAstrologer.findOne({
-          mobileNumber: query,
-        });
-
-        if (!businessProfile) {
-          businessProfile = await businessProfileAstrologer.findOne({
-            name: { $regex: new RegExp(`^${query}$`, "i") },
-          });
-        }
-      }
+    if (isObjectId) {
+      businessProfile = await businessProfileAstrologer.findById(query);
+    } else {
+      businessProfile = await businessProfileAstrologer.findOne({
+        mobileNumber: query,
+      });
 
       if (!businessProfile) {
-        return res.status(404).json({ error: "Business profile not found" });
+        businessProfile = await businessProfileAstrologer.findOne({
+          name: { $regex: new RegExp(`^${query}$`, "i") },
+        });
       }
-
-      // ⭐ Fetch Ratings
-      const ratings = await ratingModel.find({
-        astrologerId: businessProfile._id,
-      });
-
-      const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      let totalRatingSum = 0;
-
-      ratings.forEach((r) => {
-        const val = r.rating;
-        if (ratingCounts[val] !== undefined) {
-          ratingCounts[val] += 1;
-        }
-        totalRatingSum += val;
-      });
-
-      const totalRatings = ratings.length;
-      const average = totalRatings > 0 ? totalRatingSum / totalRatings : 0;
-
-      const averageRatings = {
-        averageRating_1: ratingCounts[1] ? (1).toFixed(2) : "0.00",
-        averageRating_2: ratingCounts[2] ? (2).toFixed(2) : "0.00",
-        averageRating_3: ratingCounts[3] ? (3).toFixed(2) : "0.00",
-        averageRating_4: ratingCounts[4] ? (4).toFixed(2) : "0.00",
-        averageRating_5: ratingCounts[5] ? (5).toFixed(2) : "0.00",
-      };
-
-      const formattedRatings = ratings.map((r) => ({
-        rating: r.rating,
-        userName: r.userName || "Anonymous",
-        review: r.review || "",
-        date: r.createdAt,
-      }));
-
-      // 📦 Fetch Orders
-      const orders = await orderModel.find({
-        astrologerId: businessProfile._id,
-      });
-      const totalOrderCount = orders.reduce(
-        (sum, o) => sum + (o.order || 0),
-        0
-      );
-
-      // ✅ Final Response
-      res.json({
-        ...businessProfile.toObject(),
-        ...averageRatings,
-        totalRating_1: ratingCounts[1],
-        totalRating_2: ratingCounts[2],
-        totalRating_3: ratingCounts[3],
-        totalRating_4: ratingCounts[4],
-        totalRating_5: ratingCounts[5],
-        averageRating: average.toFixed(2),
-        totalReviews: totalRatings,
-        totalOrders: totalOrderCount,
-        reviews: formattedRatings,
-      });
-    } catch (error) {
-      console.error("Fetch error:", error);
-      res.status(500).json({ error: "Failed to fetch business profile" });
     }
-  }
 
-  
-  const getAstrologerProfileFilters =   async (req, res) => {
+    if (!businessProfile) {
+      return res.status(404).json({ error: "Business profile not found" });
+    }
+
+    // ⭐ Fetch Ratings
+    const ratings = await ratingModel.find({
+      astrologerId: businessProfile._id,
+    });
+
+    const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let totalRatingSum = 0;
+
+    ratings.forEach((r) => {
+      const val = r.rating;
+      if (ratingCounts[val] !== undefined) {
+        ratingCounts[val] += 1;
+      }
+      totalRatingSum += val;
+    });
+
+    const totalRatings = ratings.length;
+    const average = totalRatings > 0 ? totalRatingSum / totalRatings : 0;
+
+    const averageRatings = {
+      averageRating_1: ratingCounts[1] ? (1).toFixed(2) : "0.00",
+      averageRating_2: ratingCounts[2] ? (2).toFixed(2) : "0.00",
+      averageRating_3: ratingCounts[3] ? (3).toFixed(2) : "0.00",
+      averageRating_4: ratingCounts[4] ? (4).toFixed(2) : "0.00",
+      averageRating_5: ratingCounts[5] ? (5).toFixed(2) : "0.00",
+    };
+
+    const formattedRatings = ratings.map((r) => ({
+      rating: r.rating,
+      userName: r.userName || "Anonymous",
+      review: r.review || "",
+      date: r.createdAt,
+    }));
+
+    // 📦 Fetch Orders
+    const orders = await orderModel.find({
+      astrologerId: businessProfile._id,
+    });
+    const totalOrderCount = orders.reduce((sum, o) => sum + (o.order || 0), 0);
+
+    // ✅ Final Response
+    res.json({
+      ...businessProfile.toObject(),
+      ...averageRatings,
+      totalRating_1: ratingCounts[1],
+      totalRating_2: ratingCounts[2],
+      totalRating_3: ratingCounts[3],
+      totalRating_4: ratingCounts[4],
+      totalRating_5: ratingCounts[5],
+      averageRating: average.toFixed(2),
+      totalReviews: totalRatings,
+      totalOrders: totalOrderCount,
+      reviews: formattedRatings,
+    });
+  } catch (error) {
+    console.error("Fetch error:", error);
+    res.status(500).json({ error: "Failed to fetch business profile" });
+  }
+};
+
+const getAstrologerProfileFilters = async (req, res) => {
   try {
     const {
       languages,
@@ -190,9 +184,9 @@ const getAstrologerProfile = async (req, res) => {
         let topAstrologer = "";
         if (numericAverage >= 4.5 && experience < 10) {
           topAstrologer = "rising_star";
-        } else if (numericAverage >= 4.7 && totalOrders >= 14) {
+        } else if (numericAverage >= 4.7 && totalOrders >= 10) {
           topAstrologer = "top_choice";
-        } else if (numericAverage >= 4.6 && experience > 15) {
+        } else if (numericAverage >= 4.6 && experience > 10) {
           topAstrologer = "celebrity";
         }
 
@@ -236,9 +230,9 @@ const getAstrologerProfile = async (req, res) => {
           if (category === "rising_star") {
             return p.numericAverage >= 4.5 && p.experience < 10;
           } else if (category === "top_choice") {
-            return p.numericAverage >= 4.7 && p.totalOrders >= 14;
+            return p.numericAverage >= 4.7 && p.totalOrders >= 10;
           } else if (category === "celebrity") {
-            return p.numericAverage >= 4.6 && p.experience > 15;
+            return p.numericAverage >= 4.6 && p.experience > 10;
           } else if (category === "All") {
             return true;
           } else {
@@ -288,263 +282,277 @@ const getAstrologerProfile = async (req, res) => {
     console.error(err);
     res.status(500).json({ message: err.message });
   }
-}
+};
 
- const putAstrologerProfile =  async (req, res, next) => {
-    try {
-      const { mobileNumber } = req.params;
-      const { profileStatus, chatStatus, requestStatus } = req.body;
+const putAstrologerProfile = async (req, res, next) => {
+  try {
+    const { mobileNumber } = req.params;
+    const { profileStatus, chatStatus, requestStatus } = req.body;
 
-      if (profileStatus === undefined && chatStatus === undefined) {
-        return res
-          .status(400)
-          .json({ error: "profileStatus or chatStatus is required" });
-      }
-
-      let updateFields = {};
-
-      if (profileStatus !== undefined) {
-        updateFields.profileStatus =
-          profileStatus === true || profileStatus === "true";
-      }
-
-      if (chatStatus !== undefined) {
-        updateFields.chatStatus = chatStatus === true || chatStatus === "true";
-      }
-      if (requestStatus !== undefined) {
-        updateFields.requestStatus =
-          requestStatus === true || requestStatus === "true";
-      }
-
-      const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
-        { mobileNumber },
-        { $set: updateFields },
-        { new: true }
-      );
-
-      if (!updatedProfile) {
-        return res.status(404).json({ error: "Astrologer not found" });
-      }
-
-      res.status(200).json({
-        message: "Success",
-        updatedProfile: updatedProfile,
-      });
-    } catch (error) {
-      next(error);
+    if (profileStatus === undefined && chatStatus === undefined) {
+      return res
+        .status(400)
+        .json({ error: "profileStatus or chatStatus is required" });
     }
-  }
 
- const putAstrologerProfileUpdate = async (req, res) => {
-    try {
-      const { mobileNumber } = req.params;
-      let {
-        name,
-        professions,
-        languages,
-        experience,
-        charges,
-        Description,
-        country,
-        gender,
-      } = req.body;
+    let updateFields = {};
 
-      const updateData = {};
-
-      if (name) updateData.name = name;
-
-      if (professions) {
-        updateData.professions =
-          typeof professions === "string"
-            ? JSON.parse(professions)
-            : professions;
-      }
-
-      if (languages) {
-        updateData.languages =
-          typeof languages === "string" ? JSON.parse(languages) : languages;
-      }
-
-      if (experience) updateData.experience = experience;
-      if (charges) updateData.charges = charges;
-      if (Description) updateData.Description = Description;
-      if (country) updateData.country = country;
-      if (gender) updateData.gender = gender;
-
-      if (req.file) {
-        updateData.profileImage = `/uploads/${req.file.filename}`;
-      }
-
-      const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
-        { mobileNumber },
-        { $set: updateData },
-        { new: true }
-      );
-
-      if (!updatedProfile) {
-        return res.status(404).json({ error: "Astrologer profile not found" });
-      }
-
-      res.status(200).json({
-        message: "success",
-        updatedProfile,
-      });
-    } catch (error) {
-      console.error("Profile update failed:", error);
-      res.status(500).json({ error: "Failed to update business profile" });
+    if (profileStatus !== undefined) {
+      updateFields.profileStatus =
+        profileStatus === true || profileStatus === "true";
     }
-  }
 
- const putAstrologerBusesProfileUpdate =   async (req, res) => {
-    try {
-      const { mobileNumber } = req.params;
-      const updateFields = req.body;
-
-      if (!mobileNumber) {
-        return res.status(400).json({ error: "Mobile number is required" });
-      }
-
-      // Handle professions and languages if frontend sends them as JSON strings
-      if (
-        updateFields.languages &&
-        typeof updateFields.languages === "string"
-      ) {
-        updateFields.languages = JSON.parse(updateFields.languages);
-      }
-      if (
-        updateFields.professions &&
-        typeof updateFields.professions === "string"
-      ) {
-        updateFields.professions = JSON.parse(updateFields.professions);
-      }
-
-      // Handle profile image if uploaded
-      if (req.file) {
-        updateFields.profileImage = `/uploads/${req.file.filename}`;
-      }
-
-      // Check if updateFields has at least one field
-      if (!Object.keys(updateFields).length) {
-        return res
-          .status(400)
-          .json({ error: "At least one field must be provided to update" });
-      }
-
-      // Find and update astrologer's profile
-      const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
-        { mobileNumber },
-        { $set: updateFields },
-        { new: true, runValidators: true }
-      );
-
-      if (!updatedProfile) {
-        return res.status(404).json({ error: "Astrologer profile not found" });
-      }
-
-      res.status(200).json({
-        message: "Success",
-        updatedProfile,
-      });
-    } catch (error) {
-      console.error("Error updating business profile:", error);
-      return res.status(500).json({
-        error: "Failed to update business profile",
-        details: error.message,
-      });
+    if (chatStatus !== undefined) {
+      updateFields.chatStatus = chatStatus === true || chatStatus === "true";
     }
+    if (requestStatus !== undefined) {
+      updateFields.requestStatus =
+        requestStatus === true || requestStatus === "true";
+    }
+
+    const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
+      { mobileNumber },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    if (!updatedProfile) {
+      return res.status(404).json({ error: "Astrologer not found" });
+    }
+
+    res.status(200).json({
+      message: "Success",
+      updatedProfile: updatedProfile,
+    });
+  } catch (error) {
+    next(error);
   }
+};
 
-   const postAstrologerProfile =  async (req, res) => {
-    try {
-      const {
-        name,
-        professions,
-        languages,
-        experience,
-        charges,
-        Description,
-        mobileNumber,
-        profileStatus,
-        chatStatus,
-        country,
-        gender,
-        starRating,
-        orders,
-        offers,
-        freeChatStatus,
-        requestStatus,
-      } = req.body;
+const putAstrologerProfileUpdate = async (req, res) => {
+  console.log("req.file",req.file);
+  
+  try {
+    const { mobileNumber } = req.params;
+    let {
+      name,
+      professions,
+      languages,
+      experience,
+      charges,
+      Description,
+      country,
+      gender,
+    } = req.body;
 
-      // Parse JSON strings if sent that way
-      const parsedLanguages =
-        typeof languages === "string" ? JSON.parse(languages) : languages;
-      const parsedProfessions =
+    const updateData = {};
+
+    if (name) updateData.name = name;
+
+    if (professions) {
+      updateData.professions =
         typeof professions === "string" ? JSON.parse(professions) : professions;
+    }
 
-      // Validation
-      if (
-        !name ||
-        !parsedProfessions?.length ||
-        !parsedLanguages?.length ||
-        !experience ||
-        !charges ||
-        !mobileNumber ||
-        !req.file ||
-        profileStatus === undefined ||
-        chatStatus === undefined ||
-        !country ||
-        !gender
-      ) {
-        return res
-          .status(400)
-          .json({ error: "All fields including the image are required" });
+    if (languages) {
+      updateData.languages =
+        typeof languages === "string" ? JSON.parse(languages) : languages;
+    }
+
+    if (experience) updateData.experience = experience;
+    if (charges) updateData.charges = charges;
+    if (Description) updateData.Description = Description;
+    if (country) updateData.country = country;
+    if (gender) updateData.gender = gender;
+    if (req.file.filename) updateData.cloudinary_id = req.file.filename;
+
+    // If images is updated then remove old image on server code start
+    const existingProfile = await businessProfileAstrologer.findOne({
+      mobileNumber,
+    });
+console.log("existingProfile",existingProfile);
+
+    if (!existingProfile) {
+      return res.status(404).json({ error: "Astrologer profile not found" });
+    }
+    if (req.file) {
+      // delete old image if cloudinary_id exists
+      if (existingProfile.cloudinary_id) {
+        await cloudinary.uploader.destroy(existingProfile.cloudinary_id);
       }
 
-      // Construct the full image URL
-      const imageURL = `/uploads/${req.file.filename}`;
-
-      const newBusinessProfile = new businessProfileAstrologer({
-        name,
-        professions: parsedProfessions,
-        languages: parsedLanguages,
-        experience,
-        charges,
-        Description:
-          Description ||
-          `${name}, a proficient Vedic Astrologer in India, is committed to helping clients in need with his spirit-guided readings. Upholding Astrology ethics, he focuses on bringing stability to lives. ${name} provides clarity and profound insights, empowering clients with spiritual knowledge about surrounding energies. Services cover Marriage Consultation, Career and Business, Love and Relationship, Wealth and Property, featuring easy and effective remedies.`,
-        mobileNumber,
-        profileImage: imageURL,
-        profileStatus,
-        chatStatus,
-        country,
-        gender,
-        starRating,
-        orders,
-        offers,
-        freeChatStatus,
-        requestStatus,
-        completeProfile : true
-      });
-
-      await newBusinessProfile.save();
-
-      res.status(201).json({
-        message: "success",
-        BusinessProfileData: newBusinessProfile,
-      });
-    } catch (error) {
-      console.error("Error uploading business profile:", error);
-      res.status(500).json({ error: "Failed to add businessProfile" });
+      // Save new image URL and public_id
+      updateData.profileImage = req.file.path;
+      updateData.cloudinary_id = req.file.filename;
     }
+    // If images is updated then remove old image on server code End
+
+    const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
+      { mobileNumber },
+      { $set: updateData },
+      { new: true }
+    );
+
+    if (!updatedProfile) {
+      return res.status(404).json({ error: "Astrologer profile not found" });
+    }
+
+    res.status(200).json({
+      message: "success",
+      updatedProfile,
+    });
+  } catch (error) {
+    console.error("Profile update failed:", error);
+    res.status(500).json({ error: "Failed to update business profile" });
   }
+};
 
+const putAstrologerBusesProfileUpdate = async (req, res) => {
+  try {
+    const { mobileNumber } = req.params;
+    const updateFields = req.body;
 
-  module.exports={
-    getAstrologerProfile,
-    getAstrologerProfileRating,
-    getAstrologerProfileFilters,
-    putAstrologerProfile,
-    putAstrologerProfileUpdate,
-    putAstrologerBusesProfileUpdate,
-    postAstrologerProfile
-}
+    if (!mobileNumber) {
+      return res.status(400).json({ error: "Mobile number is required" });
+    }
+
+    // Handle professions and languages if frontend sends them as JSON strings
+    if (updateFields.languages && typeof updateFields.languages === "string") {
+      updateFields.languages = JSON.parse(updateFields.languages);
+    }
+    if (
+      updateFields.professions &&
+      typeof updateFields.professions === "string"
+    ) {
+      updateFields.professions = JSON.parse(updateFields.professions);
+    }
+
+    // Handle profile image if uploaded
+    if (req.file) {
+      updateFields.profileImage = `${req.file.path}`;
+    }
+
+    // Check if updateFields has at least one field
+    if (!Object.keys(updateFields).length) {
+      return res
+        .status(400)
+        .json({ error: "At least one field must be provided to update" });
+    }
+
+    // Find and update astrologer's profile
+    const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
+      { mobileNumber },
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProfile) {
+      return res.status(404).json({ error: "Astrologer profile not found" });
+    }
+
+    res.status(200).json({
+      message: "Success",
+      updatedProfile,
+    });
+  } catch (error) {
+    console.error("Error updating business profile:", error);
+    return res.status(500).json({
+      error: "Failed to update business profile",
+      details: error.message,
+    });
+  }
+};
+
+const postAstrologerProfile = async (req, res) => {
+  try {
+    const {
+      name,
+      professions,
+      languages,
+      experience,
+      charges,
+      Description,
+      mobileNumber,
+      profileStatus,
+      chatStatus,
+      country,
+      gender,
+      starRating,
+      orders,
+      offers,
+      freeChatStatus,
+      requestStatus,
+    } = req.body;
+
+    // Parse JSON strings if sent that way
+    const parsedLanguages =
+      typeof languages === "string" ? JSON.parse(languages) : languages;
+    const parsedProfessions =
+      typeof professions === "string" ? JSON.parse(professions) : professions;
+
+    // Validation
+    if (
+      !name ||
+      !parsedProfessions?.length ||
+      !parsedLanguages?.length ||
+      !experience ||
+      !charges ||
+      !mobileNumber ||
+      !req.file ||
+      profileStatus === undefined ||
+      chatStatus === undefined ||
+      !country ||
+      !gender
+    ) {
+      return res
+        .status(400)
+        .json({ error: "All fields including the image are required" });
+    }
+
+    // Construct the full image URL
+    const imageURL = `${req.file.path}`;
+
+    const newBusinessProfile = new businessProfileAstrologer({
+      name,
+      professions: parsedProfessions,
+      languages: parsedLanguages,
+      experience,
+      charges,
+      Description:
+        Description ||
+        `${name}, a proficient Vedic Astrologer in India, is committed to helping clients in need with his spirit-guided readings. Upholding Astrology ethics, he focuses on bringing stability to lives. ${name} provides clarity and profound insights, empowering clients with spiritual knowledge about surrounding energies. Services cover Marriage Consultation, Career and Business, Love and Relationship, Wealth and Property, featuring easy and effective remedies.`,
+      mobileNumber,
+      profileImage: imageURL,
+      profileStatus,
+      chatStatus,
+      country,
+      gender,
+      starRating,
+      orders,
+      offers,
+      freeChatStatus,
+      requestStatus,
+      completeProfile: true,
+    });
+
+    await newBusinessProfile.save();
+
+    res.status(201).json({
+      message: "success",
+      BusinessProfileData: newBusinessProfile,
+    });
+  } catch (error) {
+    console.error("Error uploading business profile:", error);
+    res.status(500).json({ error: "Failed to add businessProfile" });
+  }
+};
+
+module.exports = {
+  getAstrologerProfile,
+  getAstrologerProfileRating,
+  getAstrologerProfileFilters,
+  putAstrologerProfile,
+  putAstrologerProfileUpdate,
+  putAstrologerBusesProfileUpdate,
+  postAstrologerProfile,
+};
