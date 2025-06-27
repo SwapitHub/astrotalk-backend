@@ -2,8 +2,7 @@ const AddGallery = require("../models/addGalleryModel");
 const cloudinary = require("../config/cloudinary");
 
 
-const getGalleryByAstroOrMobile = async (req, res) => {
-    console.log(req,"req.query");
+const getDetailGalleryByAstroOrMobile = async (req, res) => {
     
   try {
     const { nameAstro, mobileNumber } = req.query;
@@ -63,8 +62,6 @@ const deleteGalleryAstrologer = async (req, res) => {
 };
 
 
-
-
 const postGalleryAstrologer = async (req, res) => {
   try {
     const files = [
@@ -109,7 +106,7 @@ const postGalleryAstrologer = async (req, res) => {
 
 
 module.exports = {
-    getGalleryByAstroOrMobile,
+    getDetailGalleryByAstroOrMobile,
     deleteGalleryAstrologer,
     postGalleryAstrologer
 }

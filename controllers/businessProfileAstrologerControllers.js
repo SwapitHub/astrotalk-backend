@@ -122,10 +122,15 @@ const getAstrologerProfileFilters = async (req, res) => {
       limit = 10,
       freeChatStatus,
       minAverageRating,
+      profileStatus
     } = req.query;
 
     // 🔍 Step 1: Build filter object
     const filter = {};
+
+   if (profileStatus !== undefined) {
+      filter.profileStatus = profileStatus == "true";
+    }
 
     if (languages) {
       filter.languages = { $in: languages.split(",") };

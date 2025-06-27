@@ -1,10 +1,10 @@
 const express = require("express");
-const { getGalleryAstrologer, deleteGalleryAstrologer, postGalleryAstrologer, getGalleryByAstroOrMobile } = require("../controllers/addGalleryController");
+const { getDetailGalleryByAstroOrMobile, deleteGalleryAstrologer, postGalleryAstrologer } = require("../controllers/addGalleryController");
 const upload = require("../middlewares/multerConfig");
 const addGalleryRoute = express.Router();
 
 
-addGalleryRoute.get("/get-gallery-astrologer",getGalleryByAstroOrMobile);
+addGalleryRoute.get("/get-gallery-astrologer",getDetailGalleryByAstroOrMobile);
 
 addGalleryRoute.delete("/delete-gallery-astrologer", deleteGalleryAstrologer);
 
