@@ -15,7 +15,7 @@ otpRoutes.post("/send-otp", async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000); // Generate 6-digit OTP
 
    
-    const fast2smsAPIKey = process.env.fast2smsAPIKey; 
+    const fast2smsAPIKey = process.env.FAST2SMS_API_KEY; 
     const fast2smsURL = `https://www.fast2sms.com/dev/bulkV2?authorization=${fast2smsAPIKey}&variables_values=${otp}&route=otp&numbers=${phone}`;
 
     const response = await axios.get(fast2smsURL, {
