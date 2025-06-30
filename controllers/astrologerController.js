@@ -134,18 +134,22 @@ const registerAstrologer = async (req, res, next) => {
 const updateAstroStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { astroStatus } = req.body;
+    const updateFields = req.body;
 
-    if (astroStatus === undefined) {
-      return res.status(400).json({ error: "astroStatus is required" });
+    // Optional: Validate that `updateFields` is not empty
+    if (!updateFields || Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ error: "At least one field is required to update" });
     }
 
-    // Ensure the status is a boolean
-    const statusBoolean = astroStatus === true || astroStatus === "true";
+    // Convert "true"/"false" strings to boolean if necessary
+    if (updateFields.astroStatus !== undefined) {
+      updateFields.astroStatus =
+        updateFields.astroStatus === true || updateFields.astroStatus === "true";
+    }
 
     const updatedAstrologer = await AstrologerRegistration.findByIdAndUpdate(
       id,
-      { astroStatus: statusBoolean },
+      updateFields,
       { new: true }
     );
 
@@ -154,13 +158,14 @@ const updateAstroStatus = async (req, res, next) => {
     }
 
     res.status(200).json({
-      message: "Astrologer status updated successfully",
+      message: "Astrologer updated successfully",
       astrologer: updatedAstrologer,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 module.exports = {
   getAstrologerList,

@@ -10,6 +10,7 @@ const userSignUpSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   astroStatus: { type: Boolean, required: true },
   mobileNumber: { type: String, required: true },
+  blockUnblockAstro: { type: Boolean, required: true },
 }, { timestamps: true }); 
 
 const AstrologerRegistration = mongoose.model("AstrologerRegistration", userSignUpSchema);
