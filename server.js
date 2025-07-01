@@ -30,6 +30,7 @@ const { ratingRoutes } = require("./routes/ratingRouter");
 const { orderRoutes } = require("./routes/orderRouter");
 const addGalleryRoute = require("./routes/addGalleryRouter");
 const helmet = require("helmet");
+const { socketVoiceCall } = require("./middlewares/socketVoiceCall");
 
 
 const app = express();
@@ -117,8 +118,8 @@ app.use("/", addGalleryRoute);
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);
 socketIoMessageMain(io);
-
 socketUserIdToAstrologerMsg(io);
+socketVoiceCall(io);
 
 server.listen(PORT, () =>
   console.log(`Server running on http://localhost:${PORT}`)
