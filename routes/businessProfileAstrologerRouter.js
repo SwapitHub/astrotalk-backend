@@ -4,7 +4,6 @@ const businessProfileRoute = express.Router();
 
 const upload = require("../middlewares/multerConfig");
 
-
 businessProfileRoute.get("/astrologer-businessProfile/free-chat-true",getAstrologerProfile);
 businessProfileRoute.get("/astrologer-businessProfile/:query", getAstrologerProfileRating);
 businessProfileRoute.get("/astrologer-businessProfile", getAstrologerProfileFilters);
