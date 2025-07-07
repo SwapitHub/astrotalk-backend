@@ -1,6 +1,30 @@
 const astroMallShopListing = require("../models/astroMallShopListingModel");
 
 
+const getAstroShopeDetail = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const shop = await astroMallShopListing.findOne({ slug });
+
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    res.status(200).json({
+      message: "success",
+      data: shop,
+    });
+  } catch (error) {
+    console.error("Error fetching shop detail:", error);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+
 const getAstroShopeList = async (req, res) => {
   try {
     const shopItems = await astroMallShopListing.find().sort({ createdAt: -1 }); // latest first
@@ -18,23 +42,31 @@ const getAstroShopeList = async (req, res) => {
 };
 
 const postAstroShopeList = async (req, res) => {
-
   try {
-    const { offer_title, offer_name, description } = req.body;
+    const { offer_title, offer_name, description, name, slug } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: "Image is required." });
     }
 
-    const astroMallImg = req.file.path; 
-    const cloudinary_id = req.file.filename; 
+    const existingItem = await astroMallShopListing.findOne({ slug: slug });
+    if (existingItem) {
+      return res.status(409).json({
+        message: "Slug already exists. Please choose a different one.",
+      });
+    }
+
+    const astroMallImg = req.file.path;
+    const cloudinary_id = req.file.filename;
 
     const newItem = new astroMallShopListing({
+      name,
+      slug,
       offer_title,
       offer_name,
       description,
       astroMallImg,
-      cloudinary_id
+      cloudinary_id,
     });
 
     const saved = await newItem.save();
@@ -42,8 +74,10 @@ const postAstroShopeList = async (req, res) => {
     return res.status(201).json({ message: "Saved successfully", data: saved });
   } catch (err) {
     console.error("Upload failed:", err);
-    return res.status(500).json({ error: "Internal Server Error", detail: err });
+    return res
+      .status(500)
+      .json({ error: "Internal Server Error", detail: err });
   }
 };
 
-module.exports = { postAstroShopeList, getAstroShopeList };
+module.exports = { postAstroShopeList, getAstroShopeList, getAstroShopeDetail };

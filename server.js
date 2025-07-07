@@ -32,6 +32,7 @@ const addGalleryRoute = require("./routes/addGalleryRouter");
 const helmet = require("helmet");
 const { socketVoiceCall } = require("./middlewares/socketVoiceCall");
 const { astroShopList } = require("./routes/astroMallShopListingRouter");
+const { astroShopProduct } = require("./routes/astroMallShopProductRouter");
 
 
 const app = express();
@@ -116,6 +117,7 @@ app.use("/", ratingRoutes);
 app.use("/", orderRoutes);
 app.use("/", addGalleryRoute);
 app.use("/", astroShopList)
+app.use("/", astroShopProduct)
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);
