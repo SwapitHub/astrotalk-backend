@@ -335,7 +335,6 @@ const putAstrologerProfile = async (req, res, next) => {
 };
 
 const putAstrologerProfileUpdate = async (req, res) => {
-  console.log("req.file",req.file);
   
   try {
     const { mobileNumber } = req.params;

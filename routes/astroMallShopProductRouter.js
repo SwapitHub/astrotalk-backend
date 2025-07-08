@@ -1,22 +1,19 @@
 const express = require("express");
 
 const upload = require("../middlewares/multerConfig");
-const {
-  postAstroShopeProduct,
-  getAstroShopeProductByShopId,
-} = require("../controllers/astroMallShopProductControllers");
+const { getAstroShopeProduct, postAstroShopeProduct, getAstroShopeProductByShopId, deleteAstroShopeProduct, updateAstroShopeProduct } = require("../controllers/astroMallShopProductControllers");
 
 const astroShopProduct = express.Router();
 
-astroShopProduct.get(
-  "/get-astro-shope-product-shop-id/:shop_id",
-  getAstroShopeProductByShopId
-);
+astroShopProduct.get("/get-astro-shope-product", getAstroShopeProduct)
 
-astroShopProduct.post(
-  "/post-astro-shope-product",
-  upload.single("astroMallProductImg"),
-  postAstroShopeProduct
-);
+astroShopProduct.delete("/delete-astro-shope-product/:id", deleteAstroShopeProduct)
 
-module.exports = { astroShopProduct };
+astroShopProduct.put("/update-astro-shope-product/:id", upload.single("astroMallProductImg"), updateAstroShopeProduct);
+
+astroShopProduct.get("/get-astro-shope-product-shop-id/:shop_id", getAstroShopeProductByShopId)
+
+astroShopProduct.post("/post-astro-shope-product", upload.single("astroMallProductImg"), postAstroShopeProduct)
+
+module.exports = {astroShopProduct}
+
