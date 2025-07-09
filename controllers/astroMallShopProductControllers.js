@@ -124,6 +124,36 @@ const updateAstroShopeProduct = async (req, res) => {
   }
 };
 
+const getAstroProductDetail = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    if (!slug) {
+      return res.status(400).json({ message: "Product slug is required" });
+    }
+
+    const productItem = await astroMallProductListing.findOne({ slug });
+
+    if (!productItem) {
+      return res.status(404).json({ message: "No product found for this slug" });
+    }
+
+    res.status(200).json({
+      message: "Success",
+      data: productItem,
+    });
+  } catch (error) {
+    console.error("Error fetching product detail:", error);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+
+
+
 const getAstroShopeProduct = async (req, res) => {
   try {
     const productItems = await astroMallProductListing
@@ -199,4 +229,5 @@ module.exports = {
   getAstroShopeProductByShopId,
   deleteAstroShopeProduct,
   updateAstroShopeProduct,
+  getAstroProductDetail
 };

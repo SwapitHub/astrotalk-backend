@@ -33,6 +33,7 @@ const helmet = require("helmet");
 const { socketVoiceCall } = require("./middlewares/socketVoiceCall");
 const { astroShopList } = require("./routes/astroMallShopListingRouter");
 const { astroShopProduct } = require("./routes/astroMallShopProductRouter");
+const { astroGemJewelry } = require("./routes/astromallGemstoneJewelryRoute");
 
 
 const app = express();
@@ -74,14 +75,6 @@ const io = new Server(server, {
   cookie: false,
 });
 
-// const io = new Server(server, {
-//   cors: {
-//     // origin: ["http://localhost:3000", "http://localhost:3001"],
-//     origin: ["https://astrotalk-front-end-kit9.vercel.app"],
-//     methods: ["GET", "POST"],
-//     credentials: true,
-//   },
-// });
 
 const PORT = process.env.PORT || 8080;
 
@@ -118,6 +111,7 @@ app.use("/", orderRoutes);
 app.use("/", addGalleryRoute);
 app.use("/", astroShopList)
 app.use("/", astroShopProduct)
+app.use("/", astroGemJewelry)
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);

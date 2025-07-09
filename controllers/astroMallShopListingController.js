@@ -54,7 +54,15 @@ const deleteAstroShope = async (req, res) => {
 const updateAstroShopeList = async (req, res) => {
   try {
     const { id } = req.params;
-    const { offer_title, offer_name, description, name, slug } = req.body;
+    const {
+      offer_title,
+      offer_name,
+      description,
+      name,
+      slug,
+      Jewelry_product_gem,
+      discount_product,
+    } = req.body;
 
     const shop = await astroMallShopListing.findById(id);
     if (!shop) {
@@ -85,6 +93,8 @@ const updateAstroShopeList = async (req, res) => {
         offer_title,
         offer_name,
         description,
+        Jewelry_product_gem,
+        discount_product,
         astroMallImg: updatedImagePath,
         cloudinary_id: updatedCloudinaryId,
       },
@@ -121,7 +131,15 @@ const getAstroShopeList = async (req, res) => {
 
 const postAstroShopeList = async (req, res) => {
   try {
-    const { offer_title, offer_name, description, name, slug, discount_product } = req.body;
+    const {
+      offer_title,
+      offer_name,
+      description,
+      name,
+      slug,
+      discount_product,
+      Jewelry_product_gem,
+    } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: "Image is required." });
@@ -146,6 +164,7 @@ const postAstroShopeList = async (req, res) => {
       description,
       astroMallImg,
       cloudinary_id,
+      Jewelry_product_gem,
     });
 
     const saved = await newItem.save();

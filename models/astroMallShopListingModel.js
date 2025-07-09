@@ -7,6 +7,7 @@ const astroMallShopSchema = new mongoose.Schema({
   astroMallImg: String,
   offer_name: String,
   discount_product: Boolean,
+  Jewelry_product_gem: Boolean,
   description: String,
   cloudinary_id: String,
 });

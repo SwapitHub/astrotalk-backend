@@ -1,11 +1,13 @@
 const express = require("express");
 
 const upload = require("../middlewares/multerConfig");
-const { getAstroShopeProduct, postAstroShopeProduct, getAstroShopeProductByShopId, deleteAstroShopeProduct, updateAstroShopeProduct } = require("../controllers/astroMallShopProductControllers");
+const { getAstroShopeProduct, postAstroShopeProduct, getAstroShopeProductByShopId, deleteAstroShopeProduct, updateAstroShopeProduct, getAstroProductDetail } = require("../controllers/astroMallShopProductControllers");
 
 const astroShopProduct = express.Router();
 
 astroShopProduct.get("/get-astro-shope-product", getAstroShopeProduct)
+
+astroShopProduct.get("/get-astro-product-detail/:slug", getAstroProductDetail)
 
 astroShopProduct.delete("/delete-astro-shope-product/:id", deleteAstroShopeProduct)
 
