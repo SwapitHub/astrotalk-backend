@@ -34,7 +34,7 @@ const { socketVoiceCall } = require("./middlewares/socketVoiceCall");
 const { astroShopList } = require("./routes/astroMallShopListingRouter");
 const { astroShopProduct } = require("./routes/astroMallShopProductRouter");
 const { astroGemJewelry } = require("./routes/astromallGemstoneJewelryRoute");
-
+const adminServicesRoute = require("./routes/adminSpiritualServicesRoute");
 
 const app = express();
 // secure API use helmet call
@@ -44,22 +44,26 @@ const server = http.createServer(app);
 const allowedOrigins = [
   "https://astrotalk-front-end.vercel.app",
   "https://splendorous-froyo-5521f3.netlify.app",
-  "http://localhost:3000"
+  "http://localhost:3000",
 ];
 
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error("The CORS policy does not allow access from this origin."), false);
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-}));
-app.options('*', cors());
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(
+        new Error("The CORS policy does not allow access from this origin."),
+        false
+      );
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+app.options("*", cors());
 
 // === SOCKET.IO ===
 const io = new Server(server, {
@@ -74,7 +78,6 @@ const io = new Server(server, {
   pingInterval: 25000,
   cookie: false,
 });
-
 
 const PORT = process.env.PORT || 8080;
 
@@ -109,9 +112,10 @@ app.use("/", emailRouter);
 app.use("/", ratingRoutes);
 app.use("/", orderRoutes);
 app.use("/", addGalleryRoute);
-app.use("/", astroShopList)
-app.use("/", astroShopProduct)
-app.use("/", astroGemJewelry)
+app.use("/", astroShopList);
+app.use("/", astroShopProduct);
+app.use("/", astroGemJewelry);
+app.use("/", adminServicesRoute);
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);

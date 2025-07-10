@@ -2,12 +2,18 @@ const mongoose = require("mongoose");
 
 const businessProfileAstrologerSchema = new mongoose.Schema({
   name: String,
-  professions: [{ type: String }],  
+  professions: [{ type: String }],
   languages: [{ type: String, required: true }],
-  experience: String,  
-  charges : String,
-  Description : String,
-  minute : {type: String, required: false},
+  spiritual_services: [
+    {
+      service: { type: String, required: false },
+      service_price: { type: String, required: false },
+    },
+  ],
+  experience: String,
+  charges: String,
+  Description: String,
+  minute: { type: String, required: false },
   mobileNumber: String,
   profileImage: String,
   profileStatus: Boolean,
@@ -22,8 +28,11 @@ const businessProfileAstrologerSchema = new mongoose.Schema({
   astroTotalChatTime: Number,
   topAstrologer: String,
   completeProfile: Boolean,
-  cloudinary_id: String
+  cloudinary_id: String,
 });
 
-const businessProfileAstrologer = mongoose.model("businessProfileAstrologer" , businessProfileAstrologerSchema)
-module.exports =  businessProfileAstrologer
+const businessProfileAstrologer = mongoose.model(
+  "businessProfileAstrologer",
+  businessProfileAstrologerSchema
+);
+module.exports = businessProfileAstrologer;

@@ -24,6 +24,32 @@ const getAstrologerProfile = async (req, res) => {
   }
 };
 
+const putUpdateService = async (req, res) => {
+   const { mobileNumber, spiritual_services } = req.body;
+
+  if (!mobileNumber || !Array.isArray(spiritual_services)) {
+    return res.status(400).json({ message: "Missing required fields." });
+  }
+
+  try {
+    const astrologer = await businessProfileAstrologer.findOne({ mobileNumber });
+
+    if (!astrologer) {
+      return res.status(404).json({ message: "Astrologer not found." });
+    }
+
+    // Replace spiritual_services with new list
+    astrologer.spiritual_services = spiritual_services;
+    await astrologer.save();
+
+    return res.status(200).json({ message: "Services updated successfully." });
+  } catch (err) {
+    console.error("Bulk update error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 const getAstrologerProfileRating = async (req, res) => {
   try {
     const { query } = req.params;
@@ -122,13 +148,13 @@ const getAstrologerProfileFilters = async (req, res) => {
       limit = 10,
       freeChatStatus,
       minAverageRating,
-      profileStatus
+      profileStatus,
     } = req.query;
 
     // 🔍 Step 1: Build filter object
     const filter = {};
 
-   if (profileStatus !== undefined) {
+    if (profileStatus !== undefined) {
       filter.profileStatus = profileStatus == "true";
     }
 
@@ -335,7 +361,6 @@ const putAstrologerProfile = async (req, res, next) => {
 };
 
 const putAstrologerProfileUpdate = async (req, res) => {
-  
   try {
     const { mobileNumber } = req.params;
     let {
@@ -465,8 +490,8 @@ const putAstrologerBusesProfileUpdate = async (req, res) => {
 };
 
 const postAstrologerProfile = async (req, res) => {
-  console.log("filename",req.file);
-  
+  console.log("filename", req.file);
+
   try {
     const {
       name,
@@ -536,7 +561,13 @@ const postAstrologerProfile = async (req, res) => {
       freeChatStatus,
       requestStatus,
       completeProfile: true,
-      cloudinary_id: req.file.filename || ""
+      cloudinary_id: req.file.filename || "",
+      spiritual_services: [
+        {
+          service: "",
+          service_price: "",
+        },
+      ],
     });
 
     await newBusinessProfile.save();
@@ -559,4 +590,5 @@ module.exports = {
   putAstrologerProfileUpdate,
   putAstrologerBusesProfileUpdate,
   postAstrologerProfile,
+  putUpdateService,
 };
