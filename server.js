@@ -34,7 +34,6 @@ const { socketVoiceCall } = require("./middlewares/socketVoiceCall");
 const { astroShopList } = require("./routes/astroMallShopListingRouter");
 const { astroShopProduct } = require("./routes/astroMallShopProductRouter");
 const { astroGemJewelry } = require("./routes/astromallGemstoneJewelryRoute");
-const adminServicesRoute = require("./routes/adminSpiritualServicesRoute");
 
 const app = express();
 // secure API use helmet call
@@ -115,7 +114,7 @@ app.use("/", addGalleryRoute);
 app.use("/", astroShopList);
 app.use("/", astroShopProduct);
 app.use("/", astroGemJewelry);
-app.use("/", adminServicesRoute);
+// app.use("/", adminServicesRoute);
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);

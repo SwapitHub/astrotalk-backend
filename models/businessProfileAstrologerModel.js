@@ -8,6 +8,10 @@ const businessProfileAstrologerSchema = new mongoose.Schema({
     {
       service: { type: String, required: false },
       service_price: { type: String, required: false },
+      shop_id: { type: String, required: false },
+      shop_Name: { type: String, required: false },
+      shop_slug: { type: String, required: false },
+      shop_name: { type: String, required: false }
     },
   ],
   experience: String,

@@ -113,6 +113,27 @@ const updateAstroShopeList = async (req, res) => {
   }
 };
 
+const getAstroShopeListBasedServices = async (req, res) => {
+  try {
+    const shopItems = await astroMallShopListing.find({
+      Jewelry_product_gem: false,
+      discount_product: false,
+    }).sort({ createdAt: -1 }); // latest first
+
+    res.status(200).json({
+      message: "success",
+      data: shopItems,
+    });
+  } catch (error) {
+    console.error("Error fetching astro shop list:", error);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+
 const getAstroShopeList = async (req, res) => {
   try {
     const shopItems = await astroMallShopListing.find().sort({ createdAt: -1 }); // latest first
@@ -184,4 +205,5 @@ module.exports = {
   getAstroShopeDetail,
   deleteAstroShope,
   updateAstroShopeList,
+  getAstroShopeListBasedServices
 };

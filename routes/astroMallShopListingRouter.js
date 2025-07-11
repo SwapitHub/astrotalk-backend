@@ -1,10 +1,11 @@
 const express = require("express");
-const { postAstroShopeList, getAstroShopeList, getAstroShopeDetail, deleteAstroShope, updateAstroShopeList } = require("../controllers/astroMallShopListingController");
+const { postAstroShopeList, getAstroShopeList, getAstroShopeDetail, deleteAstroShope, updateAstroShopeList, getAstroShopeListBasedServices } = require("../controllers/astroMallShopListingController");
 
 const upload = require("../middlewares/multerConfig");
 const astroShopList = express.Router();
 
 astroShopList.get("/get-astro-shope-list", getAstroShopeList)
+astroShopList.get("/get-astro-shope-list-services", getAstroShopeListBasedServices)
 
 astroShopList.get("/get-astro-shope-detail/:slug", getAstroShopeDetail)
 

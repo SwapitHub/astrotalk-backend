@@ -1,10 +1,12 @@
 const express = require("express");
-const { getAstrologerProfile, getAstrologerProfileRating, getAstrologerProfileFilters, putAstrologerProfile, putAstrologerProfileUpdate, putAstrologerBusesProfileUpdate, postAstrologerProfile, putUpdateService } = require("../controllers/businessProfileAstrologerControllers");
+const { getAstrologerProfile, getAstrologerProfileRating, getAstrologerProfileFilters, putAstrologerProfile, putAstrologerProfileUpdate, putAstrologerBusesProfileUpdate, postAstrologerProfile, putUpdateService, getAstrologersServicesByShopId } = require("../controllers/businessProfileAstrologerControllers");
 const businessProfileRoute = express.Router();
 
 const upload = require("../middlewares/multerConfig");
 
 businessProfileRoute.put("/update-spiritual-service", putUpdateService);
+
+businessProfileRoute.get("/astrologer-list-spiritual-service/:shopId", getAstrologersServicesByShopId);
 businessProfileRoute.get("/astrologer-businessProfile/free-chat-true",getAstrologerProfile);
 businessProfileRoute.get("/astrologer-businessProfile/:query", getAstrologerProfileRating);
 businessProfileRoute.get("/astrologer-businessProfile", getAstrologerProfileFilters);

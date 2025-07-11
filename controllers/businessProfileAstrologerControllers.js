@@ -25,14 +25,16 @@ const getAstrologerProfile = async (req, res) => {
 };
 
 const putUpdateService = async (req, res) => {
-   const { mobileNumber, spiritual_services } = req.body;
+  const { mobileNumber, spiritual_services } = req.body;
 
   if (!mobileNumber || !Array.isArray(spiritual_services)) {
     return res.status(400).json({ message: "Missing required fields." });
   }
 
   try {
-    const astrologer = await businessProfileAstrologer.findOne({ mobileNumber });
+    const astrologer = await businessProfileAstrologer.findOne({
+      mobileNumber,
+    });
 
     if (!astrologer) {
       return res.status(404).json({ message: "Astrologer not found." });
@@ -49,6 +51,31 @@ const putUpdateService = async (req, res) => {
   }
 };
 
+const getAstrologersServicesByShopId = async (req, res) => {
+  const { shopId } = req.params;
+
+  if (!shopId) {
+    return res.status(400).json({ message: "Shop ID is required." });
+  }
+
+  try {
+    // Match astrologers where any spiritual_service has matching shop_id
+    const astrologers = await businessProfileAstrologer.find({
+      "spiritual_services.shop_id": shopId,
+    });
+
+    res.status(200).json({
+      message: "success",
+      data: astrologers,
+    });
+  } catch (error) {
+    console.error("Error fetching astrologers by shop ID:", error);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
 
 const getAstrologerProfileRating = async (req, res) => {
   try {
@@ -566,6 +593,10 @@ const postAstrologerProfile = async (req, res) => {
         {
           service: "",
           service_price: "",
+          shop_id: "",
+          shop_Name: "",
+          shop_slug: "",
+          shop_name: "",
         },
       ],
     });
@@ -591,4 +622,5 @@ module.exports = {
   putAstrologerBusesProfileUpdate,
   postAstrologerProfile,
   putUpdateService,
+  getAstrologersServicesByShopId,
 };
