@@ -1,6 +1,5 @@
 const SaveAddress = require("../models/saveAddressModel");
 
-// POST: Create new address
 const saveAddress= async (req, res) => {
   try {
     const {
@@ -17,7 +16,6 @@ const saveAddress= async (req, res) => {
       landmark,
     } = req.body;
 
-    // Simple validation
     if (!name || !mobile || !email || !flat || !locality || !city || !state || !country || !pin) {
       return res.status(400).json({ message: "Please fill all required fields" });
     }
