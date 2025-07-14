@@ -116,6 +116,7 @@ const registerAstrologer = async (req, res, next) => {
       email,
       astroStatus,
       mobileNumber,
+      blockUnblockAstro:false,
     });
 
     await newAstrologer.save();

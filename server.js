@@ -34,6 +34,7 @@ const { socketVoiceCall } = require("./middlewares/socketVoiceCall");
 const { astroShopList } = require("./routes/astroMallShopListingRouter");
 const { astroShopProduct } = require("./routes/astroMallShopProductRouter");
 const { astroGemJewelry } = require("./routes/astromallGemstoneJewelryRoute");
+const { addressRoute } = require("./routes/saveAddressRoute");
 
 const app = express();
 // secure API use helmet call
@@ -85,11 +86,11 @@ app.use(cors());
 
 // mongo db connection
 
-// connectMongoDb("mongodb://localhost:27017/chatting");
+connectMongoDb("mongodb://localhost:27017/chatting");
 
-connectMongoDb(
-  "mongodb+srv://swapitshamsher:Eb25QUq9aEt27aSQ@astrologer.euynurr.mongodb.net/astrotalk?retryWrites=true&w=majority&appName=astrologer"
-);
+// connectMongoDb(
+//   "mongodb+srv://swapitshamsher:Eb25QUq9aEt27aSQ@astrologer.euynurr.mongodb.net/astrotalk?retryWrites=true&w=majority&appName=astrologer"
+// );
 
 app.use(express.json());
 // user connect chatting socket.io
@@ -114,7 +115,7 @@ app.use("/", addGalleryRoute);
 app.use("/", astroShopList);
 app.use("/", astroShopProduct);
 app.use("/", astroGemJewelry);
-// app.use("/", adminServicesRoute);
+app.use("/", addressRoute);
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);
