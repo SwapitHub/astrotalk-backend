@@ -70,7 +70,8 @@ const updateAstroShopeProduct = async (req, res) => {
       starting_price,
       actual_price,
       discount_price,
-      description
+      description,
+      top_selling,
     } = req.body;
 
     // Step 1: Find existing product
@@ -107,7 +108,8 @@ const updateAstroShopeProduct = async (req, res) => {
         discount_price: discount_price || null,
         astroMallProductImg: updatedImagePath,
         cloudinary_id: updatedCloudinaryId,
-        description
+        description,
+        top_selling: top_selling || false,
       },
       { new: true }
     );
@@ -124,6 +126,25 @@ const updateAstroShopeProduct = async (req, res) => {
   }
 };
 
+const getAstroProductListTopSelling = async (req, res) => {
+  try {
+    const topSellingProducts = await astroMallProductListing.find({
+      top_selling: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: topSellingProducts,
+    });
+  } catch (error) {
+    console.error("Error fetching top selling products:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
 const getAstroProductDetail = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -135,7 +156,9 @@ const getAstroProductDetail = async (req, res) => {
     const productItem = await astroMallProductListing.findOne({ slug });
 
     if (!productItem) {
-      return res.status(404).json({ message: "No product found for this slug" });
+      return res
+        .status(404)
+        .json({ message: "No product found for this slug" });
     }
 
     res.status(200).json({
@@ -182,7 +205,8 @@ const postAstroShopeProduct = async (req, res) => {
       name,
       slug,
       shop_id,
-      description
+      description,
+      top_selling,
     } = req.body;
 
     if (!req.file) {
@@ -209,7 +233,8 @@ const postAstroShopeProduct = async (req, res) => {
       discount_price: discount_price || null,
       astroMallProductImg,
       cloudinary_id,
-      description
+      description,
+      top_selling: top_selling || false,
     });
 
     const saved = await newItem.save();
@@ -229,5 +254,6 @@ module.exports = {
   getAstroShopeProductByShopId,
   deleteAstroShopeProduct,
   updateAstroShopeProduct,
-  getAstroProductDetail
+  getAstroProductDetail,
+  getAstroProductListTopSelling,
 };

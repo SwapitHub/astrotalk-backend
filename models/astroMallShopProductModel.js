@@ -11,8 +11,9 @@ const astroMallProductSchema = new mongoose.Schema({
   discount_price: String,
   description: String,
   cloudinary_id: String,
+  top_selling: Boolean,
   
-});
+}, { timestamps: true });
 
 const astroMallProductListing = mongoose.model(
   "astroMallProductListing",
