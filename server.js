@@ -35,6 +35,7 @@ const { astroShopList } = require("./routes/astroMallShopListingRouter");
 const { astroShopProduct } = require("./routes/astroMallShopProductRouter");
 const { astroGemJewelry } = require("./routes/astromallGemstoneJewelryRoute");
 const { addressRoute } = require("./routes/saveAddressRoute");
+const { razorpayShopRouter } = require("./routes/razorPayShopRouter");
 
 const app = express();
 // secure API use helmet call
@@ -116,6 +117,7 @@ app.use("/", astroShopList);
 app.use("/", astroShopProduct);
 app.use("/", astroGemJewelry);
 app.use("/", addressRoute);
+app.use("/", razorpayShopRouter);
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);

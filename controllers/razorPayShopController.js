@@ -5,7 +5,7 @@ const cors = require("cors");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
 const UserLogin = require("../models/userLoginModel");
-const UserPayment = require("../models/razorpayModel");
+const UserPaymentShop = require("../models/razorPayShopModel");
 
 const razorpayRouter = express.Router();
 razorpayRouter.use(cors());
@@ -16,71 +16,63 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-const getRazorpayPayment = async (req, res) => {
+
+
+const getRazorpayShopOrders = async (req, res) => {
   try {
-    const { query } = req.params;
+    const { page = 1, limit = 10 } = req.query;
 
-    let searchCondition = { userMobile: query };
+    // Convert to numbers for pagination calculations
+    const pageNumber = parseInt(page);
+    const pageLimit = parseInt(limit);
 
-    if (mongoose.Types.ObjectId.isValid(query)) {
-      searchCondition = { _id: new mongoose.Types.ObjectId(query) };
-    }
+    // Calculate the skip and take for pagination
+    const skip = (pageNumber - 1) * pageLimit;
 
-    const loginUsers = await UserPayment.find(searchCondition); // Changed from findOne() to find()
+    // Get the total count of records in the database
+    const totalOrders = await UserPaymentShop.countDocuments();
 
-    if (!loginUsers.length) {
-      // Check if array is empty
-      return res.status(404).json({ error: "No login details found" });
-    }
+    // Retrieve paginated orders
+    const orders = await UserPaymentShop.find()
+      .skip(skip)
+      .limit(pageLimit)
+      .sort({ createdAt: -1 }); // Sort by most recent orders
 
-    res.json(loginUsers);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to fetch user login details" });
-  }
-};
+    // Calculate pagination metadata (next and prev page)
+    const totalPages = Math.ceil(totalOrders / pageLimit);
+    const hasNextPage = pageNumber < totalPages;
+    const hasPrevPage = pageNumber > 1;
 
-const getRazorpayList = async (req, res) => {
-  try {
-    const userMobile = req.params.userMobile;
+    const pagination = {
+      currentPage: pageNumber,
+      totalPages: totalPages,
+      nextPage: hasNextPage ? pageNumber + 1 : null,
+      prevPage: hasPrevPage ? pageNumber - 1 : null,
+    };
 
-    const result = await UserPayment.aggregate([
-      { $match: { userMobile: userMobile } },
-
-      {
-        $group: {
-          _id: "$userMobile",
-          totalAmount: { $sum: "$amount" },
-          orders: { $push: "$$ROOT" },
-        },
-      },
-
-      {
-        $project: {
-          _id: 0,
-          userMobile: "$_id",
-          totalAmount: 1,
-          orders: 1,
-        },
-      },
-    ]);
-
-    if (result.length === 0) {
-      return res.status(404).json({ message: "No orders found for this user" });
-    }
-
-    res.json(result[0]);
-  } catch (err) {
-    console.error("Error fetching user order list:", err); // Log the error
-    res.status(500).json({
-      message: err.message || "Failed to fetch create-order-user-list",
+    // Send the response with orders and pagination info
+    res.json({
+      orders,
+      pagination,
     });
+  } catch (error) {
+    console.error("Error in /get-orders:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
-const postRazorpayOrder = async (req, res) => {
+
+const postRazorpayShopOrder = async (req, res) => {
   try {
-    const { amount, currency, userMobile, extraAmount, totalAmount } = req.body;
+    const {
+      amount,
+      currency,
+      userMobile,
+      extraAmount,
+      totalAmount,
+      astrologerName,
+      productName
+    } = req.body;
 
     // Validate input
     if (!amount || !currency || !userMobile) {
@@ -100,13 +92,15 @@ const postRazorpayOrder = async (req, res) => {
     const order = await razorpay.orders.create(options);
 
     // Create temporary payment record with "created" status
-    const newPayment = new UserPayment({
+    const newPayment = new UserPaymentShop({
       order_id: order.id,
       amount: amount,
       extraAmount: extraAmount || 0,
       totalAmount: totalAmount || 0,
       userMobile: userMobile,
       currency: currency,
+      astrologerName,
+      productName,
       status: "FAILED", // Initial state
       createdAt: new Date(),
     });
@@ -120,7 +114,7 @@ const postRazorpayOrder = async (req, res) => {
   }
 };
 
-const postRazorpayVeryFy = async (req, res) => {
+const postRazorpayShopVeryFy = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
       req.body;
@@ -143,9 +137,7 @@ const postRazorpayVeryFy = async (req, res) => {
     const isSignatureValid = expectedSignature === razorpay_signature;
 
     if (!isSignatureValid) {
-      
-
-      await UserPayment.findOneAndUpdate(
+      await UserPaymentShop.findOneAndUpdate(
         { order_id: razorpay_order_id },
         { status: "failed", error: "Invalid signature" }
       );
@@ -156,7 +148,7 @@ const postRazorpayVeryFy = async (req, res) => {
     }
 
     // Signature is valid - update payment status
-    const updatedPayment = await UserPayment.findOneAndUpdate(
+    const updatedPayment = await UserPaymentShop.findOneAndUpdate(
       { order_id: razorpay_order_id },
       {
         payment_id: razorpay_payment_id,
@@ -172,15 +164,15 @@ const postRazorpayVeryFy = async (req, res) => {
     }
 
     // Update user's total amount only after successful payment
-    const user = await UserLogin.findOneAndUpdate(
-      { phone: updatedPayment.userMobile },
-      { $inc: { totalAmount: updatedPayment.totalAmount } },
-      { new: true }
-    );
+    // const user = await UserLogin.findOneAndUpdate(
+    //   { phone: updatedPayment.userMobile },
+    //   { $inc: { totalAmount: updatedPayment.totalAmount } },
+    //   { new: true }
+    // );
 
-    if (!user) {
-      console.error("User not found for payment:", updatedPayment);
-    }
+    // if (!user) {
+    //   console.error("User not found for payment:", updatedPayment);
+    // }
 
     return res.json({
       success: true,
@@ -200,7 +192,7 @@ const postRazorpayVeryFy = async (req, res) => {
   }
 };
 
-const postRazorpayCancelOrder = async (req, res) => {
+const postRazorpayCancelShopOrder = async (req, res) => {
   try {
     const { order_id, error } = req.body;
 
@@ -209,7 +201,7 @@ const postRazorpayCancelOrder = async (req, res) => {
     }
 
     // Update the payment record with failed status
-    await UserPayment.findOneAndUpdate(
+    await UserPaymentShop.findOneAndUpdate(
       { order_id: order_id },
       {
         status: "failed",
@@ -225,9 +217,8 @@ const postRazorpayCancelOrder = async (req, res) => {
 };
 
 module.exports = {
-  getRazorpayPayment,
-  getRazorpayList,
-  postRazorpayOrder,
-  postRazorpayVeryFy,
-  postRazorpayCancelOrder,
+  postRazorpayShopOrder,
+  postRazorpayShopVeryFy,
+  postRazorpayCancelShopOrder,
+  getRazorpayShopOrders
 };
