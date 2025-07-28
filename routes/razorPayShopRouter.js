@@ -5,9 +5,12 @@ const {
   postRazorpayShopVeryFy,
   postRazorpayCancelShopOrder,
   getRazorpayShopOrders,
+  getRazorpayShopOrderDetail,
 } = require("../controllers/razorPayShopController");
 
 const razorpayShopRouter = express.Router();
+
+razorpayShopRouter.get("/shop-order-list-detail/:order_id", getRazorpayShopOrderDetail)
 
 razorpayShopRouter.get("/shop-order-list", getRazorpayShopOrders);
 

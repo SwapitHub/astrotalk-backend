@@ -16,51 +16,71 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+const getRazorpayShopOrderDetail = async (req, res) => {
+  const { order_id } = req.params;
 
+  try {
+    if (!order_id) {
+      return res.status(404).json({ message: "Order ID is not found" });
+    }
+
+    const orderDetail = await UserPaymentShop.findOne({ order_id });
+
+    if (!orderDetail) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "success",
+      data: orderDetail,
+    });
+  } catch (error) {
+    console.error("Error retrieving order details:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
 
 const getRazorpayShopOrders = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, productType } = req.query;
 
-    // Convert to numbers for pagination calculations
     const pageNumber = parseInt(page);
     const pageLimit = parseInt(limit);
-
-    // Calculate the skip and take for pagination
     const skip = (pageNumber - 1) * pageLimit;
 
-    // Get the total count of records in the database
-    const totalOrders = await UserPaymentShop.countDocuments();
+    // Construct the query object
+    const query = {};
 
-    // Retrieve paginated orders
-    const orders = await UserPaymentShop.find()
+    if (productType && productType !== "all") {
+      query.productType = productType;
+    }
+
+    const totalOrders = await UserPaymentShop.countDocuments(query);
+
+    const orders = await UserPaymentShop.find(query)
       .skip(skip)
       .limit(pageLimit)
-      .sort({ createdAt: -1 }); // Sort by most recent orders
+      .sort({ createdAt: -1 });
 
-    // Calculate pagination metadata (next and prev page)
     const totalPages = Math.ceil(totalOrders / pageLimit);
     const hasNextPage = pageNumber < totalPages;
     const hasPrevPage = pageNumber > 1;
 
-    const pagination = {
-      currentPage: pageNumber,
-      totalPages: totalPages,
-      nextPage: hasNextPage ? pageNumber + 1 : null,
-      prevPage: hasPrevPage ? pageNumber - 1 : null,
-    };
-
-    // Send the response with orders and pagination info
     res.json({
       orders,
-      pagination,
+      pagination: {
+        currentPage: pageNumber,
+        totalPages,
+        nextPage: hasNextPage ? pageNumber + 1 : null,
+        prevPage: hasPrevPage ? pageNumber - 1 : null,
+      },
     });
   } catch (error) {
-    console.error("Error in /get-orders:", error);
+    console.error("Error in /shop-order-list:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 const postRazorpayShopOrder = async (req, res) => {
   try {
@@ -71,7 +91,10 @@ const postRazorpayShopOrder = async (req, res) => {
       extraAmount,
       totalAmount,
       astrologerName,
-      productName
+      productName,
+      productType,
+      productImg,
+      address,
     } = req.body;
 
     // Validate input
@@ -81,6 +104,24 @@ const postRazorpayShopOrder = async (req, res) => {
         .json({ error: "Amount, currency, and userMobile are required" });
     }
 
+    // Ensure the address is present or initialize as empty array
+
+    // Validate address fields if address is provided
+    if (
+      address &&
+      (!address.name ||
+        !address.mobile ||
+        !address.email ||
+        !address.flat ||
+        !address.locality ||
+        !address.city ||
+        !address.state ||
+        !address.country ||
+        !address.pin)
+    ) {
+      return res.status(400).json({ error: "All address fields are required" });
+    }
+    const addressData = address ? address : [];
     // Create Razorpay order
     const options = {
       amount: amount * 100, // Convert to paise
@@ -101,8 +142,11 @@ const postRazorpayShopOrder = async (req, res) => {
       currency: currency,
       astrologerName,
       productName,
+      productType,
+      productImg,
       status: "FAILED", // Initial state
       createdAt: new Date(),
+      addresses: addressData,
     });
 
     await newPayment.save();
@@ -220,5 +264,6 @@ module.exports = {
   postRazorpayShopOrder,
   postRazorpayShopVeryFy,
   postRazorpayCancelShopOrder,
-  getRazorpayShopOrders
+  getRazorpayShopOrders,
+  getRazorpayShopOrderDetail,
 };
