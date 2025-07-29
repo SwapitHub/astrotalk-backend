@@ -59,6 +59,30 @@ const deleteAstroShopeProduct = async (req, res) => {
   }
 };
 
+const updateAnyFieldShopProduct = async (req, res) => {
+  const productId = req.params.productId;  // use productId here
+  const updateData = req.body;
+
+  try {
+    const updatedProduct = await astroMallProductListing.findByIdAndUpdate(
+      productId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    return res.status(200).json(updatedProduct);
+  } catch (error) {
+    console.error("Error updating product:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
 const updateAstroShopeProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -174,9 +198,6 @@ const getAstroProductDetail = async (req, res) => {
   }
 };
 
-
-
-
 const getAstroShopeProduct = async (req, res) => {
   try {
     const productItems = await astroMallProductListing
@@ -256,4 +277,5 @@ module.exports = {
   updateAstroShopeProduct,
   getAstroProductDetail,
   getAstroProductListTopSelling,
+  updateAnyFieldShopProduct,
 };

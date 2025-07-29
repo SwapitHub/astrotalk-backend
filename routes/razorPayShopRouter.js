@@ -6,11 +6,14 @@ const {
   postRazorpayCancelShopOrder,
   getRazorpayShopOrders,
   getRazorpayShopOrderDetail,
+  updateAnyFieldPaymentShop,
 } = require("../controllers/razorPayShopController");
 
 const razorpayShopRouter = express.Router();
 
 razorpayShopRouter.get("/shop-order-list-detail/:order_id", getRazorpayShopOrderDetail)
+
+razorpayShopRouter.put("/update-any-field-payment-shop/:order_id", updateAnyFieldPaymentShop)
 
 razorpayShopRouter.get("/shop-order-list", getRazorpayShopOrders);
 

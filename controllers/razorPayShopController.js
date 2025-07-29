@@ -16,6 +16,30 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+
+const updateAnyFieldPaymentShop = async (req, res) => {
+  const { order_id } = req.params;
+  const updateData = req.body;
+
+  try {
+    const updatedDoc = await UserPaymentShop.findOneAndUpdate(
+      { order_id },               // Match condition
+      updateData,                 // Fields to update
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedDoc) {
+      return res.status(404).json({ message: "Payment record not found with given order_id" });
+    }
+
+    return res.status(200).json({ message: "Updated successfully", data: updatedDoc });
+  } catch (error) {
+    console.error("Error updating by order_id:", error);
+    return res.status(500).json({ message: "Server error", error });
+  }
+};
+
+
 const getRazorpayShopOrderDetail = async (req, res) => {
   const { order_id } = req.params;
 
@@ -266,4 +290,5 @@ module.exports = {
   postRazorpayCancelShopOrder,
   getRazorpayShopOrders,
   getRazorpayShopOrderDetail,
+  updateAnyFieldPaymentShop
 };

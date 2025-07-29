@@ -62,7 +62,7 @@ const deleteAstroShopeGemstoneJewelry = async (req, res) => {
 const updateAstroShopeGemstoneJewelry = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, actual_price } = req.body;
+    const { name, actual_price,productType } = req.body;
 
     const existingProduct = await astroMallGemJewelryListing.findById(id);
     if (!existingProduct) {
@@ -86,8 +86,10 @@ const updateAstroShopeGemstoneJewelry = async (req, res) => {
       {
         name,
         actual_price,
+        productType,
         astroGemstoneJewelryImg: updatedImagePath, // ✅ correct
         cloudinary_id: updatedCloudinaryId,
+        
       },
       { new: true }
     );
@@ -154,7 +156,7 @@ const getAstroShopeGemstoneJewelry = async (req, res) => {
 
 const postAstroShopeGemstoneJewelry = async (req, res) => {
   try {
-    const { name, actual_price } = req.body;
+    const { name, actual_price,productType } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: "Image is required." });
@@ -170,6 +172,7 @@ const postAstroShopeGemstoneJewelry = async (req, res) => {
       actual_price,
       astroGemstoneJewelryImg,
       cloudinary_id,
+      productType
     });
 
     const saved = await newItem.save();

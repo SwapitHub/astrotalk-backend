@@ -5,6 +5,7 @@ const astroMallGemJewelrySchema = new mongoose.Schema({
   astroGemstoneJewelryImg: String,
   actual_price: String,
   cloudinary_id: String,
+  productType: String
 });
 
 const astroMallGemJewelryListing = mongoose.model(
