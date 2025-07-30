@@ -16,29 +16,31 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-
 const updateAnyFieldPaymentShop = async (req, res) => {
   const { order_id } = req.params;
   const updateData = req.body;
 
   try {
     const updatedDoc = await UserPaymentShop.findOneAndUpdate(
-      { order_id },               // Match condition
-      updateData,                 // Fields to update
+      { order_id }, // Match condition
+      updateData, // Fields to update
       { new: true, runValidators: true }
     );
 
     if (!updatedDoc) {
-      return res.status(404).json({ message: "Payment record not found with given order_id" });
+      return res
+        .status(404)
+        .json({ message: "Payment record not found with given order_id" });
     }
 
-    return res.status(200).json({ message: "Updated successfully", data: updatedDoc });
+    return res
+      .status(200)
+      .json({ message: "Updated successfully", data: updatedDoc });
   } catch (error) {
     console.error("Error updating by order_id:", error);
     return res.status(500).json({ message: "Server error", error });
   }
 };
-
 
 const getRazorpayShopOrderDetail = async (req, res) => {
   const { order_id } = req.params;
@@ -67,7 +69,7 @@ const getRazorpayShopOrderDetail = async (req, res) => {
 
 const getRazorpayShopOrders = async (req, res) => {
   try {
-    const { page = 1, limit = 10, productType } = req.query;
+    const { page = 1, limit = 10, productType, userMobile } = req.query;
 
     const pageNumber = parseInt(page);
     const pageLimit = parseInt(limit);
@@ -78,6 +80,10 @@ const getRazorpayShopOrders = async (req, res) => {
 
     if (productType && productType !== "all") {
       query.productType = productType;
+    }
+
+    if (userMobile && userMobile.trim() !== "") {
+      query.userMobile = userMobile.trim();
     }
 
     const totalOrders = await UserPaymentShop.countDocuments(query);
@@ -290,5 +296,5 @@ module.exports = {
   postRazorpayCancelShopOrder,
   getRazorpayShopOrders,
   getRazorpayShopOrderDetail,
-  updateAnyFieldPaymentShop
+  updateAnyFieldPaymentShop,
 };

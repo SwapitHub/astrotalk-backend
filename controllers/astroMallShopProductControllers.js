@@ -96,6 +96,8 @@ const updateAstroShopeProduct = async (req, res) => {
       discount_price,
       description,
       top_selling,
+      newlyLaunched,
+      detail_information,
     } = req.body;
 
     // Step 1: Find existing product
@@ -134,6 +136,8 @@ const updateAstroShopeProduct = async (req, res) => {
         cloudinary_id: updatedCloudinaryId,
         description,
         top_selling: top_selling || false,
+        newlyLaunched: newlyLaunched || false,
+        detail_information,
       },
       { new: true }
     );
@@ -154,6 +158,25 @@ const getAstroProductListTopSelling = async (req, res) => {
   try {
     const topSellingProducts = await astroMallProductListing.find({
       top_selling: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: topSellingProducts,
+    });
+  } catch (error) {
+    console.error("Error fetching top selling products:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+const getAstroProductListNewlyLaunched = async (req, res) => {
+  try {
+    const topSellingProducts = await astroMallProductListing.find({
+      newlyLaunched: true,
     });
 
     res.status(200).json({
@@ -228,6 +251,8 @@ const postAstroShopeProduct = async (req, res) => {
       shop_id,
       description,
       top_selling,
+      newlyLaunched,
+      detail_information,
     } = req.body;
 
     if (!req.file) {
@@ -256,6 +281,8 @@ const postAstroShopeProduct = async (req, res) => {
       cloudinary_id,
       description,
       top_selling: top_selling || false,
+      newlyLaunched: newlyLaunched || false,
+      detail_information,
     });
 
     const saved = await newItem.save();
@@ -278,4 +305,5 @@ module.exports = {
   getAstroProductDetail,
   getAstroProductListTopSelling,
   updateAnyFieldShopProduct,
+  getAstroProductListNewlyLaunched,
 };

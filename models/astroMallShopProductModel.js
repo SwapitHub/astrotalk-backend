@@ -12,8 +12,10 @@ const astroMallProductSchema = new mongoose.Schema({
   description: String,
   cloudinary_id: String,
   top_selling: Boolean,
+  newlyLaunched: Boolean,
   ring_size: String,
   gemStone_product_price: String,
+  detail_information: String,
   
 }, { timestamps: true });
 
