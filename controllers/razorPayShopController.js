@@ -69,7 +69,7 @@ const getRazorpayShopOrderDetail = async (req, res) => {
 
 const getRazorpayShopOrders = async (req, res) => {
   try {
-    const { page = 1, limit = 10, productType, userMobile } = req.query;
+    const { page = 1, limit = 10, productType, userMobile, astrologerName } = req.query;
 
     const pageNumber = parseInt(page);
     const pageLimit = parseInt(limit);
@@ -84,6 +84,10 @@ const getRazorpayShopOrders = async (req, res) => {
 
     if (userMobile && userMobile.trim() !== "") {
       query.userMobile = userMobile.trim();
+    }
+
+     if (astrologerName && astrologerName.trim() !== "") {
+      query.astrologerName = astrologerName.trim();
     }
 
     const totalOrders = await UserPaymentShop.countDocuments(query);

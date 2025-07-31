@@ -4,6 +4,7 @@ const astroMallProductSchema = new mongoose.Schema({
   name: String,
   slug: String,
   shop_id: String,
+  shop_slug: String,
   astroMallProductImg: String,
   offer_name: String,
   starting_price: String,

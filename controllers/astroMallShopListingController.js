@@ -1,11 +1,21 @@
 const astroMallShopListing = require("../models/astroMallShopListingModel");
 const cloudinary = require("../config/cloudinary");
+const mongoose = require('mongoose');
 
 const getAstroShopeDetail = async (req, res) => {
   try {
-    const { slug } = req.params;
+    const { identifier } = req.params; 
 
-    const shop = await astroMallShopListing.findOne({ slug });
+    let query = {};
+
+    // Check if identifier is a valid Mongo ObjectId
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+      query = { _id: identifier };
+    } else {
+      query = { slug: identifier };
+    }
+
+    const shop = await astroMallShopListing.findOne(query);
 
     if (!shop) {
       return res.status(404).json({ message: "Shop not found" });
@@ -62,6 +72,7 @@ const updateAstroShopeList = async (req, res) => {
       slug,
       Jewelry_product_gem,
       discount_product,
+      detail_shop_information
     } = req.body;
 
     const shop = await astroMallShopListing.findById(id);
@@ -97,6 +108,7 @@ const updateAstroShopeList = async (req, res) => {
         discount_product,
         astroMallImg: updatedImagePath,
         cloudinary_id: updatedCloudinaryId,
+        detail_shop_information
       },
       { new: true }
     );
@@ -115,10 +127,12 @@ const updateAstroShopeList = async (req, res) => {
 
 const getAstroShopeListBasedServices = async (req, res) => {
   try {
-    const shopItems = await astroMallShopListing.find({
-      Jewelry_product_gem: false,
-      discount_product: false,
-    }).sort({ createdAt: -1 }); // latest first
+    const shopItems = await astroMallShopListing
+      .find({
+        Jewelry_product_gem: false,
+        discount_product: false,
+      })
+      .sort({ createdAt: -1 }); // latest first
 
     res.status(200).json({
       message: "success",
@@ -132,7 +146,6 @@ const getAstroShopeListBasedServices = async (req, res) => {
     });
   }
 };
-
 
 const getAstroShopeList = async (req, res) => {
   try {
@@ -160,6 +173,7 @@ const postAstroShopeList = async (req, res) => {
       slug,
       discount_product,
       Jewelry_product_gem,
+      detail_shop_information,
     } = req.body;
 
     if (!req.file) {
@@ -186,6 +200,7 @@ const postAstroShopeList = async (req, res) => {
       astroMallImg,
       cloudinary_id,
       Jewelry_product_gem,
+      detail_shop_information
     });
 
     const saved = await newItem.save();
@@ -205,5 +220,5 @@ module.exports = {
   getAstroShopeDetail,
   deleteAstroShope,
   updateAstroShopeList,
-  getAstroShopeListBasedServices
+  getAstroShopeListBasedServices,
 };

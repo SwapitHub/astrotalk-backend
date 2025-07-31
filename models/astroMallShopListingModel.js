@@ -10,6 +10,7 @@ const astroMallShopSchema = new mongoose.Schema({
   Jewelry_product_gem: Boolean,
   description: String,
   cloudinary_id: String,
+  detail_shop_information: String,
 });
 
 const astroMallShopListing = mongoose.model(

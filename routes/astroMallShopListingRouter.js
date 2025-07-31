@@ -7,7 +7,7 @@ const astroShopList = express.Router();
 astroShopList.get("/get-astro-shope-list", getAstroShopeList)
 astroShopList.get("/get-astro-shope-list-services", getAstroShopeListBasedServices)
 
-astroShopList.get("/get-astro-shope-detail/:slug", getAstroShopeDetail)
+astroShopList.get("/get-astro-shope-detail/:identifier", getAstroShopeDetail)
 
 astroShopList.delete("/delete-astro-shope/:id", deleteAstroShope)
 

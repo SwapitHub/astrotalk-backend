@@ -4,13 +4,22 @@ const cloudinary = require("../config/cloudinary");
 const getAstroShopeProductByShopId = async (req, res) => {
   try {
     const { shop_id } = req.params;
+    const { search } = req.query;
 
     if (!shop_id) {
       return res.status(400).json({ message: "Shop ID is required" });
     }
 
+    // Base query
+    const query = { shop_id };
+
+    // Optional name filter
+    if (search && search.trim() !== "") {
+      query.name = { $regex: search.trim(), $options: "i" };
+    }
+
     const productItems = await astroMallProductListing
-      .find({ shop_id })
+      .find(query)
       .sort({ createdAt: -1 });
 
     if (!productItems || productItems.length === 0) {
@@ -31,6 +40,7 @@ const getAstroShopeProductByShopId = async (req, res) => {
     });
   }
 };
+
 
 const deleteAstroShopeProduct = async (req, res) => {
   try {
@@ -90,6 +100,7 @@ const updateAstroShopeProduct = async (req, res) => {
       name,
       slug,
       shop_id,
+      shop_slug,
       offer_name,
       starting_price,
       actual_price,
@@ -128,6 +139,7 @@ const updateAstroShopeProduct = async (req, res) => {
         name,
         slug,
         shop_id,
+        shop_slug,
         offer_name,
         starting_price: starting_price || null,
         actual_price: actual_price || null,
@@ -275,6 +287,7 @@ const postAstroShopeProduct = async (req, res) => {
       name,
       slug,
       shop_id,
+      shop_slug,
       description,
       top_selling,
       newlyLaunched,
@@ -299,6 +312,7 @@ const postAstroShopeProduct = async (req, res) => {
       name,
       slug,
       shop_id,
+      shop_slug,
       offer_name,
       starting_price: starting_price || null,
       actual_price: actual_price || null,
