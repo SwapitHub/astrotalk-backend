@@ -225,7 +225,7 @@ const getAstroShopeProduct = async (req, res) => {
   try {
     const productItems = await astroMallProductListing
       .find()
-      .sort({ createdAt: -1 }); // latest first
+      .sort({ createdAt: -1 }); 
     res.status(200).json({
       message: "success",
       data: productItems,
@@ -238,6 +238,32 @@ const getAstroShopeProduct = async (req, res) => {
     });
   }
 };
+
+const getAstroShopProductSuggestions = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query || query.trim() === "") {
+      return res.status(400).json({ message: "Query parameter is required." });
+    }
+
+    // Search by product name, return full product documents
+    const matchingProducts = await astroMallProductListing.find({
+      name: { $regex: query, $options: "i" }
+    }).sort({ createdAt: -1 }).limit(5);
+    res.status(200).json({
+      message: "success",
+      data: matchingProducts,
+    });
+  } catch (error) {
+    console.error("Error fetching product suggestions:", error);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
 
 const postAstroShopeProduct = async (req, res) => {
   try {
@@ -306,4 +332,5 @@ module.exports = {
   getAstroProductListTopSelling,
   updateAnyFieldShopProduct,
   getAstroProductListNewlyLaunched,
+  getAstroShopProductSuggestions
 };
