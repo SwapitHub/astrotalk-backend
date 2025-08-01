@@ -57,7 +57,16 @@ const deleteAstroShopeProduct = async (req, res) => {
       await cloudinary.uploader.destroy(product.cloudinary_id);
     }
 
-    // Step 3: Delete product from MongoDB
+   // Step 3: Delete all gallery images from Cloudinary
+    if (product.images && product.images.length > 0) {
+      for (const img of product.images) {
+        if (img.cloudinary_id) {
+          await cloudinary.uploader.destroy(img.cloudinary_id);
+        }
+      }
+    }
+
+  // Step 4: Delete product from MongoDB
     await astroMallProductListing.findByIdAndDelete(id);
 
     return res
@@ -68,6 +77,47 @@ const deleteAstroShopeProduct = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+const deleteSingleAstroProductImage = async (req, res) => {
+    try {
+    const { imageId } = req.params;
+
+    // Step 1: Find the product containing the image
+    const product = await astroMallProductListing.findOne({
+      "images._id": imageId,
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Image not found in any product" });
+    }
+
+    // Step 2: Find the exact image object
+    const imageToDelete = product.images.find((img) => img._id.toString() === imageId);
+
+    if (!imageToDelete) {
+      return res.status(404).json({ message: "Image not found" });
+    }
+
+    // Step 3: Delete from Cloudinary
+    if (imageToDelete.cloudinary_id) {
+      await cloudinary.uploader.destroy(imageToDelete.cloudinary_id);
+    }
+
+    // Step 4: Remove the image from the images array
+    await astroMallProductListing.updateOne(
+      { _id: product._id },
+      { $pull: { images: { _id: imageId } } }
+    );
+
+    return res.status(200).json({ message: "Image deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting image by ID:", error);
+    return res.status(500).json({ message: "Server error", error });
+  }
+};
+
+
+
 
 const updateAnyFieldShopProduct = async (req, res) => {
   const productId = req.params.productId;  // use productId here
@@ -111,28 +161,48 @@ const updateAstroShopeProduct = async (req, res) => {
       detail_information,
     } = req.body;
 
-    // Step 1: Find existing product
+    // 1. Find the existing product
     const existingProduct = await astroMallProductListing.findById(id);
     if (!existingProduct) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Step 2: If new image uploaded, delete old image and upload new one
-    let updatedImagePath = existingProduct.astroMallProductImg;
+    // 2. Handle main image update
+    let updatedMainImage = existingProduct.astroMallProductImg;
     let updatedCloudinaryId = existingProduct.cloudinary_id;
 
-    if (req.file) {
-      // Delete old image from cloudinary
+    if (
+      req.files &&
+      req.files["astroMallProductImg"] &&
+      req.files["astroMallProductImg"].length > 0
+    ) {
+      const newMainImg = req.files["astroMallProductImg"][0];
+
+      // Delete previous from cloudinary if exists
       if (existingProduct.cloudinary_id) {
         await cloudinary.uploader.destroy(existingProduct.cloudinary_id);
       }
 
-      // Save new image details
-      updatedImagePath = req.file.path;
-      updatedCloudinaryId = req.file.filename;
+      updatedMainImage = newMainImg.path;
+      updatedCloudinaryId = newMainImg.filename;
     }
 
-    // Step 3: Update the product
+    // 3. Handle gallery image updates (append new ones)
+    let updatedImages = [...existingProduct.images]; // default to existing
+
+    if (
+      req.files &&
+      req.files["astroMallImages"] &&
+      req.files["astroMallImages"].length > 0
+    ) {
+      const newImages = req.files["astroMallImages"].map((file) => ({
+        url: file.path,
+        cloudinary_id: file.filename,
+      }));
+      updatedImages = [...updatedImages, ...newImages]; // Append mode
+    }
+
+    // 4. Perform the update
     const updatedProduct = await astroMallProductListing.findByIdAndUpdate(
       id,
       {
@@ -144,11 +214,12 @@ const updateAstroShopeProduct = async (req, res) => {
         starting_price: starting_price || null,
         actual_price: actual_price || null,
         discount_price: discount_price || null,
-        astroMallProductImg: updatedImagePath,
+        astroMallProductImg: updatedMainImage,
         cloudinary_id: updatedCloudinaryId,
+        images: updatedImages,
         description,
-        top_selling: top_selling || false,
-        newlyLaunched: newlyLaunched || false,
+        top_selling: top_selling === "true" || top_selling === true,
+        newlyLaunched: newlyLaunched === "true" || newlyLaunched === true,
         detail_information,
       },
       { new: true }
@@ -165,6 +236,7 @@ const updateAstroShopeProduct = async (req, res) => {
       .json({ message: "Internal Server Error", detail: error.message });
   }
 };
+
 
 const getAstroProductListTopSelling = async (req, res) => {
   try {
@@ -294,8 +366,11 @@ const postAstroShopeProduct = async (req, res) => {
       detail_information,
     } = req.body;
 
-    if (!req.file) {
-      return res.status(400).json({ message: "Image is required." });
+     if (!req.files || !req.files["astroMallProductImg"] || req.files["astroMallProductImg"].length === 0) {
+      return res.status(400).json({ message: "Main product image is required." });
+    }
+    if (!req.files["astroMallImages"] || req.files["astroMallImages"].length === 0) {
+      return res.status(400).json({ message: "At least one gallery image is required." });
     }
 
     const existingItem = await astroMallProductListing.findOne({ slug: slug });
@@ -305,8 +380,15 @@ const postAstroShopeProduct = async (req, res) => {
       });
     }
 
-    const astroMallProductImg = req.file.path;
-    const cloudinary_id = req.file.filename;
+      const mainImageFile = req.files["astroMallProductImg"][0];
+    const astroMallProductImg = mainImageFile.path; // or mainImageFile.location for cloudinary
+    const cloudinary_id = mainImageFile.filename;
+
+    // Map multiple images
+    const images = req.files["astroMallImages"].map((file) => ({
+      url: file.path,
+      cloudinary_id: file.filename,
+    }));
 
     const newItem = new astroMallProductListing({
       name,
@@ -319,6 +401,7 @@ const postAstroShopeProduct = async (req, res) => {
       discount_price: discount_price || null,
       astroMallProductImg,
       cloudinary_id,
+      images,
       description,
       top_selling: top_selling || false,
       newlyLaunched: newlyLaunched || false,
@@ -346,5 +429,6 @@ module.exports = {
   getAstroProductListTopSelling,
   updateAnyFieldShopProduct,
   getAstroProductListNewlyLaunched,
-  getAstroShopProductSuggestions
+  getAstroShopProductSuggestions,
+  deleteSingleAstroProductImage,
 };
