@@ -55,7 +55,6 @@ astroShopProduct.put(
   updateAstroShopeProduct
 );
 
-
 astroShopProduct.put(
   "/update-any-field-astro-shope-product/:productId",
   updateAnyFieldShopProduct
