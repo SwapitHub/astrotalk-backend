@@ -11,6 +11,7 @@ const PaymentShopSchema = new mongoose.Schema(
     currency: String,
     userMobile: Number,
     astrologerName: String,
+    astrologerPhone: String,
     productName: String,
     productType: String,
     productImg: String,
