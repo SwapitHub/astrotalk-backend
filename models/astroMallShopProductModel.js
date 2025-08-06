@@ -17,6 +17,7 @@ const astroMallProductSchema = new mongoose.Schema(
     newlyLaunched: Boolean,
     ring_size: String,
     gemStone_product_price: String,
+    product_type_gem: String,
     detail_information: String,
     images: [
       {

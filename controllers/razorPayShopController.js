@@ -130,6 +130,7 @@ const postRazorpayShopOrder = async (req, res) => {
       productType,
       productImg,
       address,
+      product_type_gem,
     } = req.body;
 
     // Validate input
@@ -183,6 +184,9 @@ const postRazorpayShopOrder = async (req, res) => {
       status: "FAILED", // Initial state
       createdAt: new Date(),
       addresses: addressData,
+      product_order_status: false,
+      product_order_complete: false,
+      product_type_gem,
     });
 
     await newPayment.save();

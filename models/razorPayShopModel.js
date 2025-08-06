@@ -17,6 +17,9 @@ const PaymentShopSchema = new mongoose.Schema(
     productImg: String,
     ring_size: String,
     gemStone_product_price: String,
+    product_order_status: Boolean,
+    product_order_complete: Boolean,
+    product_type_gem: String,
     status: { type: String, default: "pending" },
 
     addresses: [
