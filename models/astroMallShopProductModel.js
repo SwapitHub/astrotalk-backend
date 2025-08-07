@@ -11,6 +11,7 @@ const astroMallProductSchema = new mongoose.Schema(
     starting_price: String,
     actual_price: String,
     discount_price: String,
+    shop_product_type: String,
     description: String,
     cloudinary_id: String,
     top_selling: Boolean,

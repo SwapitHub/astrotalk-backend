@@ -41,7 +41,6 @@ const getAstroShopeProductByShopId = async (req, res) => {
   }
 };
 
-
 const deleteAstroShopeProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -57,7 +56,7 @@ const deleteAstroShopeProduct = async (req, res) => {
       await cloudinary.uploader.destroy(product.cloudinary_id);
     }
 
-   // Step 3: Delete all gallery images from Cloudinary
+    // Step 3: Delete all gallery images from Cloudinary
     if (product.images && product.images.length > 0) {
       for (const img of product.images) {
         if (img.cloudinary_id) {
@@ -66,7 +65,7 @@ const deleteAstroShopeProduct = async (req, res) => {
       }
     }
 
-  // Step 4: Delete product from MongoDB
+    // Step 4: Delete product from MongoDB
     await astroMallProductListing.findByIdAndDelete(id);
 
     return res
@@ -79,7 +78,7 @@ const deleteAstroShopeProduct = async (req, res) => {
 };
 
 const deleteSingleAstroProductImage = async (req, res) => {
-    try {
+  try {
     const { imageId } = req.params;
 
     // Step 1: Find the product containing the image
@@ -88,11 +87,15 @@ const deleteSingleAstroProductImage = async (req, res) => {
     });
 
     if (!product) {
-      return res.status(404).json({ message: "Image not found in any product" });
+      return res
+        .status(404)
+        .json({ message: "Image not found in any product" });
     }
 
     // Step 2: Find the exact image object
-    const imageToDelete = product.images.find((img) => img._id.toString() === imageId);
+    const imageToDelete = product.images.find(
+      (img) => img._id.toString() === imageId
+    );
 
     if (!imageToDelete) {
       return res.status(404).json({ message: "Image not found" });
@@ -116,11 +119,8 @@ const deleteSingleAstroProductImage = async (req, res) => {
   }
 };
 
-
-
-
 const updateAnyFieldShopProduct = async (req, res) => {
-  const productId = req.params.productId;  // use productId here
+  const productId = req.params.productId; // use productId here
   const updateData = req.body;
 
   try {
@@ -141,8 +141,6 @@ const updateAnyFieldShopProduct = async (req, res) => {
   }
 };
 
-
-
 const updateAstroShopeProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -159,7 +157,9 @@ const updateAstroShopeProduct = async (req, res) => {
       top_selling,
       newlyLaunched,
       detail_information,
+      shop_product_type,
     } = req.body;
+console.log("shop_product_type",shop_product_type);
 
     // 1. Find the existing product
     const existingProduct = await astroMallProductListing.findById(id);
@@ -221,6 +221,7 @@ const updateAstroShopeProduct = async (req, res) => {
         top_selling: top_selling === "true" || top_selling === true,
         newlyLaunched: newlyLaunched === "true" || newlyLaunched === true,
         detail_information,
+        shop_product_type,
       },
       { new: true }
     );
@@ -236,7 +237,6 @@ const updateAstroShopeProduct = async (req, res) => {
       .json({ message: "Internal Server Error", detail: error.message });
   }
 };
-
 
 const getAstroProductListTopSelling = async (req, res) => {
   try {
@@ -309,7 +309,7 @@ const getAstroShopeProduct = async (req, res) => {
   try {
     const productItems = await astroMallProductListing
       .find()
-      .sort({ createdAt: -1 }); 
+      .sort({ createdAt: -1 });
     res.status(200).json({
       message: "success",
       data: productItems,
@@ -332,9 +332,12 @@ const getAstroShopProductSuggestions = async (req, res) => {
     }
 
     // Search by product name, return full product documents
-    const matchingProducts = await astroMallProductListing.find({
-      name: { $regex: query, $options: "i" }
-    }).sort({ createdAt: -1 }).limit(5);
+    const matchingProducts = await astroMallProductListing
+      .find({
+        name: { $regex: query, $options: "i" },
+      })
+      .sort({ createdAt: -1 })
+      .limit(5);
     res.status(200).json({
       message: "success",
       data: matchingProducts,
@@ -347,7 +350,6 @@ const getAstroShopProductSuggestions = async (req, res) => {
     });
   }
 };
-
 
 const postAstroShopeProduct = async (req, res) => {
   try {
@@ -364,13 +366,25 @@ const postAstroShopeProduct = async (req, res) => {
       top_selling,
       newlyLaunched,
       detail_information,
+      shop_product_type,
     } = req.body;
 
-     if (!req.files || !req.files["astroMallProductImg"] || req.files["astroMallProductImg"].length === 0) {
-      return res.status(400).json({ message: "Main product image is required." });
+    if (
+      !req.files ||
+      !req.files["astroMallProductImg"] ||
+      req.files["astroMallProductImg"].length === 0
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Main product image is required." });
     }
-    if (!req.files["astroMallImages"] || req.files["astroMallImages"].length === 0) {
-      return res.status(400).json({ message: "At least one gallery image is required." });
+    if (
+      !req.files["astroMallImages"] ||
+      req.files["astroMallImages"].length === 0
+    ) {
+      return res
+        .status(400)
+        .json({ message: "At least one gallery image is required." });
     }
 
     const existingItem = await astroMallProductListing.findOne({ slug: slug });
@@ -380,7 +394,7 @@ const postAstroShopeProduct = async (req, res) => {
       });
     }
 
-      const mainImageFile = req.files["astroMallProductImg"][0];
+    const mainImageFile = req.files["astroMallProductImg"][0];
     const astroMallProductImg = mainImageFile.path; // or mainImageFile.location for cloudinary
     const cloudinary_id = mainImageFile.filename;
 
@@ -406,6 +420,7 @@ const postAstroShopeProduct = async (req, res) => {
       top_selling: top_selling || false,
       newlyLaunched: newlyLaunched || false,
       detail_information,
+      shop_product_type,
     });
 
     const saved = await newItem.save();
