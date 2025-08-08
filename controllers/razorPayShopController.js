@@ -69,7 +69,7 @@ const getRazorpayShopOrderDetail = async (req, res) => {
 
 const getRazorpayShopOrders = async (req, res) => {
   try {
-    const { page = 1, limit = 10, productType, userMobile, astrologerName } = req.query;
+    const { page = 1, limit = 10, productType, userMobile, astrologerName, search } = req.query;
 
     const pageNumber = parseInt(page);
     const pageLimit = parseInt(limit);
@@ -90,6 +90,24 @@ const getRazorpayShopOrders = async (req, res) => {
       query.astrologerName = astrologerName.trim();
     }
 
+  // Smart Search
+    if (search && search.trim() !== "") {
+      const searchValue = search.trim();
+      const searchRegex = { $regex: searchValue, $options: "i" };
+
+      query.$or = [];
+
+      // Try regex on string fields
+      query.$or.push({ astrologerName: searchRegex });
+      query.$or.push({ productName: searchRegex });
+       query.$or.push({ order_id: searchRegex });
+
+      // If search is a number, search number fields exactly
+      if (!isNaN(searchValue)) {
+        query.$or.push({ userMobile: Number(searchValue) });
+      }
+    }
+    
     const totalOrders = await UserPaymentShop.countDocuments(query);
 
     const orders = await UserPaymentShop.find(query)
