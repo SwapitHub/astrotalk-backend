@@ -32,6 +32,21 @@ const getDenoMinationAdminList = async (req, res) => {
   }
 }
 
+const deleteDenominationAdmin = async (req, res)=>{
+   const id = req.params.id;
+  try{
+    const deleteData = await denominationAdmin.findByIdAndDelete(id)
+    if(!deleteData){
+      return res.status(404).json({message: "Denomination not found"})
+    }
+
+    res.status(200).json({message: "success"})
+  }
+  catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+}
+
 const setDenoMinationAdmin = async (req, res) => {
   try {
     const { amount, extraAmount, mostPopular } = req.body;
@@ -59,5 +74,6 @@ const setDenoMinationAdmin = async (req, res) => {
 module.exports={
     getDenoMinationAdmin,
     getDenoMinationAdminList,
-    setDenoMinationAdmin
+    setDenoMinationAdmin,
+    deleteDenominationAdmin
 }

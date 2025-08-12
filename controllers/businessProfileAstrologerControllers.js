@@ -390,6 +390,8 @@ const putAstrologerProfile = async (req, res, next) => {
 const putAstrologerProfileUpdate = async (req, res) => {
   try {
     const { mobileNumber } = req.params;
+
+    // Destructure all possible fields from request body
     let {
       name,
       professions,
@@ -401,36 +403,41 @@ const putAstrologerProfileUpdate = async (req, res) => {
       gender,
     } = req.body;
 
+    // Prepare update object
     const updateData = {};
 
-    if (name) updateData.name = name;
+    if (name?.trim()) updateData.name = name.trim();
 
     if (professions) {
       updateData.professions =
-        typeof professions === "string" ? JSON.parse(professions) : professions;
+        typeof professions === "string"
+          ? JSON.parse(professions)
+          : professions;
     }
 
     if (languages) {
       updateData.languages =
-        typeof languages === "string" ? JSON.parse(languages) : languages;
+        typeof languages === "string"
+          ? JSON.parse(languages)
+          : languages;
     }
 
     if (experience) updateData.experience = experience;
     if (charges) updateData.charges = charges;
-    if (Description) updateData.Description = Description;
-    if (country) updateData.country = country;
-    if (gender) updateData.gender = gender;
-    if (req.file.filename) updateData.cloudinary_id = req.file.filename;
+    if (Description?.trim()) updateData.Description = Description.trim();
+    if (country?.trim()) updateData.country = country.trim();
+    if (gender?.trim()) updateData.gender = gender.trim();
 
-    // If images is updated then remove old image on server code start
-    const existingProfile = await businessProfileAstrologer.findOne({
-      mobileNumber,
-    });
+    // Get existing profile to handle image replacement
+    const existingProfile = await businessProfileAstrologer.findOne({ mobileNumber });
 
     if (!existingProfile) {
       return res.status(404).json({ error: "Astrologer profile not found" });
     }
+
+    // Handle new image upload (optional)
     if (req.file) {
+      // Delete previous image if exists
       if (existingProfile.cloudinary_id) {
         await cloudinary.uploader.destroy(existingProfile.cloudinary_id);
       }
@@ -438,8 +445,8 @@ const putAstrologerProfileUpdate = async (req, res) => {
       updateData.profileImage = req.file.path;
       updateData.cloudinary_id = req.file.filename;
     }
-    // If images is updated then remove old image on server code End
 
+    // Perform the update
     const updatedProfile = await businessProfileAstrologer.findOneAndUpdate(
       { mobileNumber },
       { $set: updateData },
@@ -447,18 +454,19 @@ const putAstrologerProfileUpdate = async (req, res) => {
     );
 
     if (!updatedProfile) {
-      return res.status(404).json({ error: "Astrologer profile not found" });
+      return res.status(404).json({ error: "Failed to update profile" });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "success",
       updatedProfile,
     });
   } catch (error) {
     console.error("Profile update failed:", error);
-    res.status(500).json({ error: "Failed to update business profile" });
+    return res.status(500).json({ error: "Failed to update business profile" });
   }
 };
+
 
 const putAstrologerBusesProfileUpdate = async (req, res) => {
   try {
