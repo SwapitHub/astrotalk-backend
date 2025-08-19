@@ -158,8 +158,11 @@ const updateAstroShopeProduct = async (req, res) => {
       newlyLaunched,
       detail_information,
       shop_product_type,
+      meta_description,
+      meta_title,
+      meta_keyword,
     } = req.body;
-console.log("shop_product_type",shop_product_type);
+    console.log("shop_product_type", shop_product_type);
 
     // 1. Find the existing product
     const existingProduct = await astroMallProductListing.findById(id);
@@ -222,6 +225,9 @@ console.log("shop_product_type",shop_product_type);
         newlyLaunched: newlyLaunched === "true" || newlyLaunched === true,
         detail_information,
         shop_product_type,
+        meta_description,
+        meta_title,
+        meta_keyword,
       },
       { new: true }
     );
@@ -367,6 +373,9 @@ const postAstroShopeProduct = async (req, res) => {
       newlyLaunched,
       detail_information,
       shop_product_type,
+      meta_description,
+      meta_title,
+      meta_keyword,
     } = req.body;
 
     if (
@@ -421,6 +430,9 @@ const postAstroShopeProduct = async (req, res) => {
       newlyLaunched: newlyLaunched || false,
       detail_information,
       shop_product_type,
+      meta_description,
+      meta_title,
+      meta_keyword,
     });
 
     const saved = await newItem.save();

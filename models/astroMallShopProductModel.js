@@ -20,6 +20,9 @@ const astroMallProductSchema = new mongoose.Schema(
     gemStone_product_price: String,
     product_type_gem: String,
     detail_information: String,
+    meta_description: String,
+    meta_title: String,
+    meta_keyword: String,
     images: [
       {
         url: String,
