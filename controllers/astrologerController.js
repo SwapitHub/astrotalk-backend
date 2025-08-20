@@ -66,7 +66,6 @@ const getAstrologerDetail = async (req, res, next) => {
 
 // ✅ Register New Astrologer
 const registerAstrologer = async (req, res, next) => {
-
   try {
     const {
       name,
@@ -106,6 +105,9 @@ const registerAstrologer = async (req, res, next) => {
         .json({ error: "Email or mobile number already registered" });
     }
 
+    const aadhaarCard = req.files?.aadhaarCard?.[0]?.path || null;
+    const certificate = req.files?.certificate?.[0]?.path || null;
+
     const newAstrologer = new AstrologerRegistration({
       name,
       dateOfBirth,
@@ -116,7 +118,9 @@ const registerAstrologer = async (req, res, next) => {
       email,
       astroStatus,
       mobileNumber,
-      blockUnblockAstro:false,
+      blockUnblockAstro: false,
+      aadhaarCard,
+      certificate,
     });
 
     await newAstrologer.save();
@@ -138,13 +142,16 @@ const updateAstroStatus = async (req, res, next) => {
 
     // Optional: Validate that `updateFields` is not empty
     if (!updateFields || Object.keys(updateFields).length === 0) {
-      return res.status(400).json({ error: "At least one field is required to update" });
+      return res
+        .status(400)
+        .json({ error: "At least one field is required to update" });
     }
 
     // Convert "true"/"false" strings to boolean if necessary
     if (updateFields.astroStatus !== undefined) {
       updateFields.astroStatus =
-        updateFields.astroStatus === true || updateFields.astroStatus === "true";
+        updateFields.astroStatus === true ||
+        updateFields.astroStatus === "true";
     }
 
     const updatedAstrologer = await AstrologerRegistration.findByIdAndUpdate(
@@ -165,7 +172,6 @@ const updateAstroStatus = async (req, res, next) => {
     next(error);
   }
 };
-
 
 module.exports = {
   getAstrologerList,
