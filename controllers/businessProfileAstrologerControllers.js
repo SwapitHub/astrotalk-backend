@@ -209,17 +209,10 @@ const getAstrologerProfileFilters = async (req, res) => {
       filter.freeChatStatus = freeChatStatus === "true";
     }
 
-    // 🔄 Step 2: Fetch unsorted, paginated data
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const totalDocs = await businessProfileAstrologer.countDocuments(filter);
+    // 🔄 Step 2: Fetch all matching data (no pagination yet)
+    let profiles = await businessProfileAstrologer.find(filter);
 
-    let profiles = await businessProfileAstrologer
-      .find(filter)
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    // 🌟 Step 5: Attach average rating and total reviews
-
+    // 🌟 Step 3: Attach average rating and total reviews to each profile
     const enrichedProfiles = await Promise.all(
       profiles.map(async (profile) => {
         const ratings = await ratingModel.find({ astrologerId: profile._id });
@@ -238,6 +231,7 @@ const getAstrologerProfileFilters = async (req, res) => {
         const totalOrders = await orderModel.countDocuments({
           astrologerId: profile._id,
         });
+
         // 🔍 Determine topAstrologer tag
         let topAstrologer = "";
         if (numericAverage >= 4.5 && experience < 10) {
@@ -277,7 +271,6 @@ const getAstrologerProfileFilters = async (req, res) => {
     );
 
     // Filter by average rating (after enrichment)
-
     let finalProfiles = enrichedProfiles;
 
     if (minAverageRating) {
@@ -300,7 +293,7 @@ const getAstrologerProfileFilters = async (req, res) => {
       });
     }
 
-    // 🔃 Step 3: Convert and sort in JS
+    // 🔃 Step 4: Sorting the profiles (after filtering)
     if (sortby) {
       finalProfiles = finalProfiles.sort((a, b) => {
         const expA = parseFloat(a.experience) || 0;
@@ -329,18 +322,26 @@ const getAstrologerProfileFilters = async (req, res) => {
       });
     }
 
-    // ✅ Step 5: Respond
+    // 🔄 Step 5: Pagination after sorting
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const totalRecords = finalProfiles.length;
+    const totalPages = Math.ceil(totalRecords / limit);
+
+    const paginatedProfiles = finalProfiles.slice(skip, skip + parseInt(limit));
+
+    // ✅ Step 6: Respond
     res.json({
-      total: finalProfiles.length,
+      total: totalRecords,
       currentPage: parseInt(page),
-      totalPages: Math.ceil(finalProfiles.length / limit),
-      profiles: finalProfiles,
+      totalPages,
+      profiles: paginatedProfiles,
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
   }
 };
+
 
 const putAstrologerProfile = async (req, res, next) => {
   try {

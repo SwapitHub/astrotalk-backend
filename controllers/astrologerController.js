@@ -41,6 +41,27 @@ const getAstrologerList = async (req, res, next) => {
   }
 };
 
+const deleteAstrologerList = async (req, res) => {
+  try {
+    const { mobileNumber } = req.params;
+    const astrologer = await AstrologerRegistration.findOne({ mobileNumber });
+
+    if (!astrologer) {
+      return res.status(404).json({ error: "Astrologer not found" });
+    }
+
+    await AstrologerRegistration.deleteOne({ mobileNumber });
+
+    res.status(200).json({
+      success: true,
+      message: "Astrologer deleted successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // ✅ Get Astrologer by ID
 const getAstrologerDetail = async (req, res, next) => {
   try {
@@ -178,4 +199,5 @@ module.exports = {
   getAstrologerDetail,
   registerAstrologer,
   updateAstroStatus,
+  deleteAstrologerList,
 };
