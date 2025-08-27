@@ -93,9 +93,8 @@ app.use(cors());
 
 // connectMongoDb("mongodb://localhost:27017/chatting");
 
-
 connectMongoDb(
- "mongodb+srv://swapitshamsher:Eb25QUq9aEt27aSQ@astrologer.euynurr.mongodb.net/astrotalk?//retryWrites=true&w=majority&appName=astrologer"
+  "mongodb+srv://swapitshamsher:Eb25QUq9aEt27aSQ@astrologer.euynurr.mongodb.net/astrotalk?retryWrites=true&w=majority&appName=astrologer"
 );
 
 app.use(express.json());
