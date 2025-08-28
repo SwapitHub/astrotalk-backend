@@ -45,7 +45,7 @@ const app = express();
 // secure API use helmet call
 app.use(helmet());
 const bodyParser = require('body-parser');
-const { seminarData } = require("./routes/SeminarRouter");
+const { seminarData } = require("./routes/seminarRouter");
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const server = http.createServer(app);
