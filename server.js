@@ -44,7 +44,11 @@ const { seoMetaData } = require("./routes/seoMetaDataRoute");
 const app = express();
 // secure API use helmet call
 app.use(helmet());
-
+const bodyParser = require('body-parser');
+const routerVonage = require("./routes/vonageVoiceCall");
+const { seminarData } = require("./routes/SeminarRouter");
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 const server = http.createServer(app);
 const allowedOrigins = [
   "https://astrotalk-front-end.vercel.app",
@@ -126,7 +130,8 @@ app.use("/", adminCommissionRoutePuja);
 app.use("/", addProductFooterRoute);
 app.use("/", HomeBannerRouter);
 app.use("/", seoMetaData);
-
+app.use("/", seminarData)
+app.use("/", routerVonage);
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);
 socketIoMessageMain(io);
