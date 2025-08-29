@@ -1,6 +1,50 @@
 const seminarData = require("../models/seminarModel");
 const cloudinary = require("../config/cloudinary");
 
+const putSeminarFetchData = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    const image = req.file;
+
+    // find existing seminar
+    const seminar = await seminarData.findById(id);
+    if (!seminar) {
+      return res.status(404).json({ error: "Seminar not found" });
+    }
+
+    // if new image uploaded, delete old one from cloudinary
+    if (image) {
+      if (seminar.image?.cloudinary_id) {
+        await cloudinary.uploader.destroy(seminar.image.cloudinary_id);
+      }
+
+      const uploadResult = await cloudinary.uploader.upload(image.path, {
+        folder: "seminars",
+      });
+
+      updateData.image = {
+        img_url: uploadResult.secure_url,
+        cloudinary_id: uploadResult.public_id,
+      };
+    }
+
+    // update in DB
+    const updatedSeminar = await seminarData.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true } 
+    );
+
+    return res.status(200).json({
+      message: "success",
+      data: updatedSeminar,
+    });
+  } catch (err) {
+    console.error("Error updating seminar data:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
 
 const deleteSeminarFetchData = async (req, res) => {
   try {
@@ -18,7 +62,7 @@ const deleteSeminarFetchData = async (req, res) => {
 
     await seminarData.findByIdAndDelete(id);
 
-    return res.status(200).json({ message: "Seminar deleted successfully" });
+    return res.status(200).json({ message: "success" });
   } catch (error) {
     console.error("Error deleting seminar:", error);
     return res.status(500).json({ error: "Internal Server Error" });
@@ -105,4 +149,4 @@ const postSeminarFetchData = async (req, res) => {
   }
 };
 
-module.exports = { postSeminarFetchData, getSeminarFetchData, deleteSeminarFetchData };
+module.exports = { postSeminarFetchData, getSeminarFetchData, deleteSeminarFetchData,putSeminarFetchData };
