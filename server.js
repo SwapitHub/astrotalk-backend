@@ -41,6 +41,7 @@ const addProductFooterRoute = require("./routes/addFooterRouter");
 const HomeBannerRouter = require("./routes/HomeBannerRouter");
 const { seoMetaData } = require("./routes/seoMetaDataRoute");
 const { seminarData } = require("./routes/seminarRouter");
+const { userSeminar } = require("./routes/userSeminarRegistrationRoute");
 
 const app = express();
 // secure API use helmet call
@@ -128,6 +129,8 @@ app.use("/", addProductFooterRoute);
 app.use("/", HomeBannerRouter);
 app.use("/", seoMetaData);
 app.use("/", seminarData);
+app.use("/", userSeminar);
+
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);
 socketIoMessageMain(io);

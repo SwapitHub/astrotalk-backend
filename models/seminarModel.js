@@ -10,6 +10,8 @@ const seminarDataSchema = new mongoose.Schema(
     email: String,
     mobile_number: String,
     seminar_detail: String,
+    seminar_status: Boolean,
+    seminar_link: String,
     singleImages: {
       img_url: String,
       cloudinary_id: String,

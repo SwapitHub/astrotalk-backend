@@ -94,6 +94,8 @@ const postSeminarFetchData = async (req, res) => {
       location_seminar,
       email,
       seminar_detail,
+      seminar_status,
+      seminar_link
     } = req.body;
 
     const image = req.file;
@@ -105,7 +107,8 @@ const postSeminarFetchData = async (req, res) => {
       !time_of_seminar ||
       !mobile_number ||
       !location_seminar ||
-      !email
+      !email ||      
+      !seminar_link
     ) {
       return res.status(400).json({ error: "Missing required fields." });
     }
@@ -131,6 +134,8 @@ const postSeminarFetchData = async (req, res) => {
       location_seminar,
       email,
       seminar_detail,
+      seminar_status,
+      seminar_link,
       singleImages: {
         img_url,
         cloudinary_id,
