@@ -100,7 +100,7 @@ const postRegistrationUser = async (req, res) => {
   try {
     const { userName, userEmail, astrologer_id } = req.body;
 
-    // 1️⃣ Basic validation
+    // ✅ Basic validation
     if (!userName || !userEmail || !astrologer_id) {
       return res.status(400).json({
         success: false,
@@ -108,49 +108,38 @@ const postRegistrationUser = async (req, res) => {
       });
     }
 
-    // 2️⃣ Email format validation
+    // ✅ Email format check (basic regex)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(userEmail)) {
       return res.status(400).json({
         success: false,
         error: "Invalid email format",
-      });
+      }); 
     }
+    const result = await sendRegistrationSuccessEmail(userName,astrologer_id, userEmail);
+console.log(result,"result===");
 
-    // 3️⃣ Prevent duplicate registration (check first, before saving or sending mail)
+    // ✅ Prevent duplicate registration for the same seminar (optional)
     const existingUser = await userSeminar.findOne({
-      userEmail: userEmail.toLowerCase(),
+      userEmail,
       astrologer_id,
     });
-
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        error: "You have already registered for this seminar.",
+        error: "User already registered for this seminar",
       });
     }
 
-    // 4️⃣ Save new registration
+    // ✅ Save new registration
     const newUserSeminar = new userSeminar({
       userName,
-      userEmail: userEmail.toLowerCase(), // normalize email
+      userEmail,
       astrologer_id,
     });
 
     const savedSeminarUser = await newUserSeminar.save();
 
-    // 5️⃣ Send confirmation email only once after successful save
-    const result = await sendRegistrationSuccessEmail(
-      userName,
-      userEmail,
-      astrologer_id
-    );
-
-    if (!result.success) {
-      console.warn("⚠️ Email not sent:", result.error);
-    }
-
-    // 6️⃣ Respond success
     return res.status(201).json({
       success: true,
       message: "Registration successful",
