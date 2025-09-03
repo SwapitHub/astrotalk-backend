@@ -27,6 +27,15 @@ function socketVoiceCall(io) {
       });
     });
 
+    //screen share
+    socket.on("start-screen-share", ({ roomId, userId }) => {
+      socket.to(roomId).emit("user-started-screen-share", { userId, socketId: socket.id });
+    });
+
+    socket.on("stop-screen-share", ({ roomId, userId }) => {
+      socket.to(roomId).emit("user-stopped-screen-share", { userId, socketId: socket.id });
+    });
+
     // ICE candidates
     socket.on("ice-candidate", ({ targetSocketId, candidate }) => {
       io.to(targetSocketId).emit("ice-candidate", {
