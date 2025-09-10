@@ -53,6 +53,23 @@ function socketVoiceCall(io) {
       });
     });
 
+    socket.on("join-user-call", async (roomId) => {
+      console.log("🔔 join-user-call-requestPaidChat:", roomId);
+
+      io.emit("join-user-call-new-notification", {
+        message: "You have a new join user call request!",
+        roomId,
+      });
+    });
+
+    socket.on("accept-join-user-call", async (roomId) => {
+      console.log("🔔 accept-join-user-call-requestPaidChat:", roomId);
+
+      io.emit("accept-join-user-call-new-notification", {
+        message: "You have a new accept-join-user-call request!",
+        roomId,
+      });
+    });
 
     // Disconnect
     socket.on("disconnect", () => {
