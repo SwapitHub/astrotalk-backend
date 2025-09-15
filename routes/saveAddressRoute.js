@@ -5,10 +5,9 @@ const addressRoute = express.Router()
 
 addressRoute.post("/save-address", saveAddress)
 
-addressRoute.get("/get-save-address-detail/:userMobile", getSaveAddress)
+addressRoute.get("/get-address/:userMobile", getSaveAddress)
 addressRoute.get("/get-save-address-detail/:id", getSaveAddressId)
-addressRoute.put("/update-save-address-detail/:userMobile", updateAddress)
-
+addressRoute.put("/update-address/:userMobile", updateAddress)
 
 module.exports = {addressRoute}
 
