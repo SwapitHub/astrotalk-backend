@@ -526,7 +526,6 @@ const putAstrologerBusesProfileUpdate = async (req, res) => {
 };
 
 const postAstrologerProfile = async (req, res) => {
-  console.log("filename", req.file);
 
   try {
     const {

@@ -120,6 +120,12 @@ async function socketIoMessage(io) {
             : 0;
           const newBalance = previousBalance + astrologerEarnings;
 
+          await businessProfileAstrologer.updateOne(
+            { _id: chatTimeLeftData.astrologerId },
+            { $set: { totalAvailableBalance: newBalance } }
+          );
+
+
           const astrologerTransaction = new WalletTransaction({
             type: "astrologer",
             astrologer_id: chatTimeLeftData.astrologerId,

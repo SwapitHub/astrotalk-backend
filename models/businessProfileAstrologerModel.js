@@ -33,6 +33,7 @@ const businessProfileAstrologerSchema = new mongoose.Schema({
   topAstrologer: String,
   completeProfile: Boolean,
   cloudinary_id: String,
+  totalAvailableBalance:Number,
 });
 
 const businessProfileAstrologer = mongoose.model(
