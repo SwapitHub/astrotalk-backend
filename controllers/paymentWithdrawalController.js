@@ -1,6 +1,18 @@
 const PaymentWithdraw = require("../models/paymentWithdrawalModel");
 const nodemailer = require("nodemailer");
 
+
+// 2️⃣ Setup mail transporter (keep your SMTP config secure in env variables)
+const transporter = nodemailer.createTransport({
+    host: "smtp.hostinger.com",
+    port: 465,
+    secure: true,
+    auth: {
+        user: "info@demoprojectwork.com",
+        pass: "bQ|4TcE+Py1", // ⚠️ should be in .env file
+    },
+});
+
 const sendPaymentWithdrawSuccessEmail = async (userName, withdrawalId, adminEmail) => {
     try {
         // 1️⃣ Fetch withdrawal details from DB
@@ -22,16 +34,7 @@ const sendPaymentWithdrawSuccessEmail = async (userName, withdrawalId, adminEmai
             createdAt,
         } = withdrawal;
 
-        // 2️⃣ Setup mail transporter (keep your SMTP config secure in env variables)
-        const transporter = nodemailer.createTransport({
-            host: "smtp.hostinger.com",
-            port: 465,
-            secure: true,
-            auth: {
-                user: "info@demoprojectwork.com",
-                pass: "bQ|4TcE+Py1", // ⚠️ should be in .env file
-            },
-        });
+
 
         // 3️⃣ Compose mail content
         const mailOptions = {
@@ -149,50 +152,90 @@ const handlePostPaymentWithdrawal = async (req, res) => {
 
 
 const handleGetAllPaymentWithdrawal = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
 
-    const skip = (page - 1) * limit;
-    const total = await PaymentWithdraw.countDocuments();
+        const skip = (page - 1) * limit;
+        const total = await PaymentWithdraw.countDocuments();
 
-    const data = await PaymentWithdraw.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+        const data = await PaymentWithdraw.find()
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-    const totalPages = Math.ceil(total / limit);
+        const totalPages = Math.ceil(total / limit);
 
-    res.status(200).json({
-      currentPage: page,
-      totalPages,
-      totalItems: total,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1,
-      data,
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Error fetching withdrawals", message: error.message });
-  }
+        res.status(200).json({
+            currentPage: page,
+            totalPages,
+            totalItems: total,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            data,
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Error fetching withdrawals", message: error.message });
+    }
 };
 
 
 const handleGetDetailPaymentWithdrawal = async (req, res) => {
-  try {
-    const { astrologerPhone } = req.params;
+    try {
+        const { astrologerPhone } = req.params;
 
-    const withdrawals = await PaymentWithdraw.find({ astrologerPhone });
+        const withdrawals = await PaymentWithdraw.find({ astrologerPhone });
 
-    if (!withdrawals || withdrawals.length === 0) {
-      return res.status(404).json({ error: "No withdrawal records found for this astrologer" });
+        if (!withdrawals || withdrawals.length === 0) {
+            return res.status(404).json({ error: "No withdrawal records found for this astrologer" });
+        }
+
+        res.status(200).json(withdrawals);
+    } catch (error) {
+        console.error("Error fetching withdrawal:", error);
+        res.status(500).json({ error: "Error fetching withdrawal" });
     }
-
-    res.status(200).json(withdrawals);
-  } catch (error) {
-    console.error("Error fetching withdrawal:", error);
-    res.status(500).json({ error: "Error fetching withdrawal" });
-  }
 };
+
+const nodemailer = require("nodemailer");
+
+
+
+const sendSuccessEmailToAstrologer = async (toEmail, astrologerName, withdrawData) => {
+    try {
+        const mailOptions = {
+            from: `"Astro App" <info@demoprojectwork.com>`,
+            to: toEmail,
+            subject: "💸 Payment Approved – Astro App",
+            html: `
+        <div style="font-family:Arial,sans-serif; padding:20px; color:#333;">
+          <h2>Hello ${astrologerName || "Astrologer"},</h2>
+          <p>Your withdrawal request has been <strong>approved</strong>.</p>
+
+          <h3>🧾 Payment Details:</h3>
+          <ul>
+            <li><strong>Name:</strong> ${withdrawData.name}</li>
+            <li><strong>UPI ID:</strong> ${withdrawData.upiId}</li>
+            <li><strong>Bank:</strong> ${withdrawData.bankName}</li>
+            <li><strong>Account:</strong> ${withdrawData.accountNumber}</li>
+            <li><strong>IFSC:</strong> ${withdrawData.ifscCode}</li>
+          </ul>
+
+          <p>You will receive your payment shortly.</p>
+
+          <p style="margin-top:30px;">Thank you,<br /><strong>Astro App Team</strong></p>
+        </div>
+      `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Email sent to ${toEmail}`);
+    } catch (error) {
+        console.error("❌ Email sending failed:", error);
+    }
+};
+
+module.exports = sendSuccessEmailToAstrologer;
 
 
 const handlePutPaymentWithdrawal = async (req, res) => {
@@ -200,16 +243,26 @@ const handlePutPaymentWithdrawal = async (req, res) => {
         const { id } = req.params;
         const updateData = req.body;
 
-        // Optionally: you can check if all required fields are present in updateData here
-
+        const previous = await PaymentWithdraw.findById(id);
         const updated = await PaymentWithdraw.findByIdAndUpdate(id, updateData, {
-            new: true,          // return updated document
-            runValidators: true, // validate all fields according to schema
-            overwrite: true     // **Important** for PUT to replace whole document except _id
+            new: true,
+            runValidators: true,
         });
 
         if (!updated) {
             return res.status(404).json({ error: "Withdrawal not found" });
+        }
+
+        // ✅ Trigger email if status changed to approved
+        if (
+            updateData.status === "approved" &&
+            previous.status !== "approved" &&
+            updated.userId
+        ) {
+            const astrologer = await User.findById(updated.userId);
+            if (astrologer?.email) {
+                await sendSuccessEmailToAstrologer(astrologer.email, astrologer.name, updated);
+            }
         }
 
         res.status(200).json({
@@ -217,8 +270,7 @@ const handlePutPaymentWithdrawal = async (req, res) => {
             data: updated,
         });
     } catch (error) {
-        console.error("Update error:", error);
-        res.status(500).json({ error: "Failed to update withdrawal" });
+        res.status(500).json({ error: "Failed to update withdrawal", message: error.message });
     }
 };
 
