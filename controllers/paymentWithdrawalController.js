@@ -184,7 +184,13 @@ const handleGetDetailPaymentWithdrawal = async (req, res) => {
     try {
         const { astrologerPhone } = req.params;
 
-        const withdrawals = await PaymentWithdraw.find({ astrologerPhone });
+        // Sanitize input, assuming astrologerPhone is a number
+        if (!astrologerPhone || isNaN(astrologerPhone)) {
+            return res.status(400).json({ error: "Invalid astrologer phone number" });
+        }
+
+        // Find all withdrawals matching the astrologerPhone
+        const withdrawals = await PaymentWithdraw.find({ astrologerPhone: Number(astrologerPhone) });
 
         if (!withdrawals || withdrawals.length === 0) {
             return res.status(404).json({ error: "No withdrawal records found for this astrologer" });
@@ -193,9 +199,10 @@ const handleGetDetailPaymentWithdrawal = async (req, res) => {
         res.status(200).json(withdrawals);
     } catch (error) {
         console.error("Error fetching withdrawal:", error);
-        res.status(500).json({ error: "Error fetching withdrawal" });
+        res.status(500).json({ error: "Error fetching withdrawal", message: error.message });
     }
 };
+
 
 
 
