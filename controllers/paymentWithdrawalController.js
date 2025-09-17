@@ -68,9 +68,12 @@ const handlePutPaymentWithdrawal = async (req, res) => {
         const { id } = req.params;
         const updateData = req.body;
 
+        // Optionally: you can check if all required fields are present in updateData here
+
         const updated = await PaymentWithdraw.findByIdAndUpdate(id, updateData, {
-            new: true,
-            runValidators: true
+            new: true,          // return updated document
+            runValidators: true, // validate all fields according to schema
+            overwrite: true     // **Important** for PUT to replace whole document except _id
         });
 
         if (!updated) {
@@ -82,11 +85,14 @@ const handlePutPaymentWithdrawal = async (req, res) => {
             data: updated,
         });
     } catch (error) {
+        console.error("Update error:", error);
         res.status(500).json({ error: "Failed to update withdrawal" });
     }
-}
+};
 
 
+
+// DELETE /api/withdrawals/:id
 const handleDeletePaymentWithdrawal = async (req, res) => {
     try {
         const { id } = req.params;
@@ -97,11 +103,13 @@ const handleDeletePaymentWithdrawal = async (req, res) => {
             return res.status(404).json({ error: "Withdrawal not found" });
         }
 
-        res.status(200).json({ message: "Withdrawal deleted successfully" });
+        return res.status(200).json({ message: "Withdrawal deleted successfully" });
     } catch (error) {
-        res.status(500).json({ error: "Failed to delete withdrawal" });
+        console.error("Delete error:", error);
+        return res.status(500).json({ error: "Failed to delete withdrawal" });
     }
-}
+};
+
 
 module.exports = {
     handlePostPaymentWithdrawal,
