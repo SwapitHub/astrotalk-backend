@@ -246,6 +246,7 @@ const handlePutPaymentWithdrawal = async (req, res) => {
             new: true,
             runValidators: true,
         });
+            console.log("astrologer==1",previous,updated);
 
         if (!updated) {
             return res.status(404).json({ error: "Withdrawal not found" });
@@ -253,13 +254,13 @@ const handlePutPaymentWithdrawal = async (req, res) => {
 
         // ✅ Trigger email if status changed to approved
         if (
-            updateData.status === "approved" &&
-            previous.status !== "approved" &&
-            updated.userId
+            updateData.status == "approved"           
         ) {
-            const astrologer = await User.findById(updated.userId);
-            if (astrologer?.email) {
-                await sendSuccessEmailToAstrologer(astrologer.email, astrologer.name, updated);
+            const astrologer = await PaymentWithdraw.findById(updated._id);
+            console.log("astrologer==",astrologer);
+            
+            if (astrologer?.adminEmail) {
+                await sendSuccessEmailToAstrologer(astrologer.adminEmail, astrologer.name, updated);
             }
         }
 
