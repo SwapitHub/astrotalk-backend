@@ -154,8 +154,8 @@ const handleGetAllPaymentWithdrawal = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
 
     const skip = (page - 1) * limit;
-
     const total = await PaymentWithdraw.countDocuments();
+
     const data = await PaymentWithdraw.find()
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -172,7 +172,7 @@ const handleGetAllPaymentWithdrawal = async (req, res) => {
       data,
     });
   } catch (error) {
-    res.status(500).json({ error: "Error fetching withdrawals" });
+    res.status(500).json({ error: "Error fetching withdrawals", message: error.message });
   }
 };
 
