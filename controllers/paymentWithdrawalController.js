@@ -113,7 +113,8 @@ const handlePostPaymentWithdrawal = async (req, res) => {
             accountNumber,
             ifscCode,
             userId,
-            adminEmail
+            adminEmail,
+            astrologerPhone,
         } = req.body;
 
         const newRequest = new PaymentWithdraw({
@@ -124,7 +125,8 @@ const handlePostPaymentWithdrawal = async (req, res) => {
             accountNumber,
             ifscCode,
             userId,
-            adminEmail
+            adminEmail,
+            astrologerPhone
         });
 
         await newRequest.save();
@@ -147,28 +149,51 @@ const handlePostPaymentWithdrawal = async (req, res) => {
 
 
 const handleGetAllPaymentWithdrawal = async (req, res) => {
-    try {
-        const data = await PaymentWithdraw.find().sort({ createdAt: -1 });
-        res.status(200).json(data);
-    } catch (error) {
-        res.status(500).json({ error: "Error fetching withdrawals" });
-    }
-}
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const skip = (page - 1) * limit;
+
+    const total = await PaymentWithdraw.countDocuments();
+    const data = await PaymentWithdraw.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      currentPage: page,
+      totalPages,
+      totalItems: total,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching withdrawals" });
+  }
+};
+
 
 const handleGetDetailPaymentWithdrawal = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const withdrawal = await PaymentWithdraw.findById(id);
+  try {
+    const { astrologerPhone } = req.params;
 
-        if (!withdrawal) {
-            return res.status(404).json({ error: "Withdrawal not found" });
-        }
+    const withdrawals = await PaymentWithdraw.find({ astrologerPhone });
 
-        res.status(200).json(withdrawal);
-    } catch (error) {
-        res.status(500).json({ error: "Error fetching withdrawal" });
+    if (!withdrawals || withdrawals.length === 0) {
+      return res.status(404).json({ error: "No withdrawal records found for this astrologer" });
     }
-}
+
+    res.status(200).json(withdrawals);
+  } catch (error) {
+    console.error("Error fetching withdrawal:", error);
+    res.status(500).json({ error: "Error fetching withdrawal" });
+  }
+};
+
 
 const handlePutPaymentWithdrawal = async (req, res) => {
     try {

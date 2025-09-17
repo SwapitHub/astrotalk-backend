@@ -23,6 +23,7 @@ const paymentWithdrawSchema = new mongoose.Schema({
     required: [true, "admin Email is required"],
     trim: true,
   },
+  astrologerPhone: Number,
   bankName: {
     type: String,
     required: [true, "Bank name is required"],
