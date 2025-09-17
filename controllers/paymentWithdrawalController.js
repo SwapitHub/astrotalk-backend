@@ -197,7 +197,6 @@ const handleGetDetailPaymentWithdrawal = async (req, res) => {
     }
 };
 
-const nodemailer = require("nodemailer");
 
 
 
