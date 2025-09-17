@@ -234,7 +234,6 @@ const sendSuccessEmailToAstrologer = async (toEmail, astrologerName, withdrawDat
     }
 };
 
-module.exports = sendSuccessEmailToAstrologer;
 
 
 const handlePutPaymentWithdrawal = async (req, res) => {
