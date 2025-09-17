@@ -25,7 +25,7 @@ businessProfileRoute.get(
   getAstrologerProfile
 );
 businessProfileRoute.get(
-  "/astrologer-businessProfile/:query",
+  "/astrologer-businessProfile-detail/:query",
   getAstrologerProfileRating
 );
 businessProfileRoute.get(
