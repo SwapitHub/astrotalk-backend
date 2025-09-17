@@ -117,7 +117,6 @@ const postRegistrationUser = async (req, res) => {
       }); 
     }
     const result = await sendRegistrationSuccessEmail(userName,astrologer_id, userEmail);
-console.log(result,"result===");
 
     // ✅ Prevent duplicate registration for the same seminar (optional)
     const existingUser = await userSeminar.findOne({
