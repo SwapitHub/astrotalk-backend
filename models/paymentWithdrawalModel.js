@@ -18,6 +18,11 @@ const paymentWithdrawSchema = new mongoose.Schema({
     required: [true, "Account holder name is required"],
     trim: true,
   },
+   adminEmail: {
+    type: String,
+    required: [true, "admin Email is required"],
+    trim: true,
+  },
   bankName: {
     type: String,
     required: [true, "Bank name is required"],

@@ -1,7 +1,7 @@
 const PaymentWithdraw = require("../models/paymentWithdrawalModel");
 const nodemailer = require("nodemailer");
 
-const sendPaymentWithdrawSuccessEmail = async (userName, withdrawalId, userEmail) => {
+const sendPaymentWithdrawSuccessEmail = async (userName, withdrawalId, adminEmail) => {
     try {
         // 1️⃣ Fetch withdrawal details from DB
         const withdrawal = await PaymentWithdraw.findById(withdrawalId);
@@ -36,7 +36,7 @@ const sendPaymentWithdrawSuccessEmail = async (userName, withdrawalId, userEmail
         // 3️⃣ Compose mail content
         const mailOptions = {
             from: `"Astro App" <info@demoprojectwork.com>`,
-            to: userEmail,
+            to: adminEmail,
             subject: "Payment Withdrawal Request Received ✅",
             html: `
         <div style="font-family: Arial, sans-serif; background:#f9f9f9; padding: 20px;">
@@ -113,7 +113,7 @@ const handlePostPaymentWithdrawal = async (req, res) => {
             accountNumber,
             ifscCode,
             userId,
-            userEmail
+            adminEmail
         } = req.body;
 
         const newRequest = new PaymentWithdraw({
@@ -123,12 +123,13 @@ const handlePostPaymentWithdrawal = async (req, res) => {
             bankName,
             accountNumber,
             ifscCode,
-            userId
+            userId,
+            adminEmail
         });
 
         await newRequest.save();
 
-        await sendPaymentWithdrawSuccessEmail(name, newRequest._id, userEmail);
+        await sendPaymentWithdrawSuccessEmail(name, newRequest._id, adminEmail);
 
         return res.status(201).json({
             message: "Withdrawal request submitted successfully",
