@@ -1,95 +1,61 @@
 const categoryBlogs = require("../models/blogsCategoryModel");
 
-// CREATE Category
-const handleCategoryPost = async (req, res) => {
-  try {
-    const { name, description, slug } = req.body;
-
-    // Check if name or slug already exists
-    const existing = await categoryBlogs.findOne({
-      $or: [{ name }, { slug }]
-    });
-
-    if (existing) {
-      return res.status(400).json({ error: "Category name or slug already exists" });
-    }
-
-    const category = new categoryBlogs({ name, description, slug });
-    await category.save();
-
-    res.status(201).json({
-      message: "Category created successfully",
-      category
-    });
-  } catch (err) {
-    console.error("Error creating category:", err.message);
-    res.status(500).json({ error: "Server error", message: err.message });
-  }
-};;
-
-// GET All Categories
 const handleGetAllCategories = async (req, res) => {
   try {
-    const categories = await categoryBlogs.find().sort({ createdAt: -1 });
-    res.status(200).json(categories);
+    const AddBlogsCategoryData = await categoryBlogs.find();
+    res.json(AddBlogsCategoryData);
   } catch (err) {
-    res.status(500).json({ error: "Server error", message: err.message });
+    res.status(500).json({ message: err.message });
   }
 };
 
-// GET One Category by Slug
-const handleGetCategoryBySlug = async (req, res) => {
-  try {
-    const { slug } = req.params;
-    const category = await categoryBlogs.findOne({ slug });
-
-    if (!category) return res.status(404).json({ error: "Category not found" });
-
-    res.status(200).json(category);
-  } catch (err) {
-    res.status(500).json({ error: "Server error", message: err.message });
-  }
-};
-
-// UPDATE Category
-const handleUpdateCategory = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, description } = req.body;
-
-    const updated = await categoryBlogs.findByIdAndUpdate(
-      id,
-      { name, description, slug: slugify(name, { lower: true, strict: true }) },
-      { new: true }
-    );
-
-    if (!updated) return res.status(404).json({ error: "Category not found" });
-
-    res.status(200).json(updated);
-  } catch (err) {
-    res.status(500).json({ error: "Server error", message: err.message });
-  }
-};
-
-// DELETE Category
 const handleDeleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deleted = await categoryBlogs.findByIdAndDelete(id);
+    const deletedBlogsCategory = await categoryBlogs.findByIdAndDelete(id);
 
-    if (!deleted) return res.status(404).json({ error: "Category not found" });
+    if (!deletedBlogsCategory) {
+      return res.status(404).json({ message: "BlogsCategory not found" });
+    }
 
-    res.status(200).json({ message: "Category deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ error: "Server error", message: err.message });
+    res.status(200).json({
+      message: "success",
+      data: deletedBlogsCategory,
+    });
+  } catch (error) {
+    console.error("delete-language-astrologer:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
+const handleCategoryPost = async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: "Please fill blogs category" });
+    }
+
+    const newBlogsCategory = new categoryBlogs({
+      name,
+    });
+
+    await newBlogsCategory.save();
+
+    res.status(200).json({
+      message: "success",
+      data: newBlogsCategory,
+    });
+  } catch (error) {
+    console.error("add-BlogsCategory error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
 module.exports = {
   handleCategoryPost,
-  handleGetAllCategories,
-  handleGetCategoryBySlug,
-  handleUpdateCategory,
-  handleDeleteCategory
+  handleDeleteCategory,
+  handleGetAllCategories
 };
+

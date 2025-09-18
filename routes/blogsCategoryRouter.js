@@ -1,18 +1,16 @@
 const express = require("express");
-const { handleCategoryPost, handleGetAllCategories, handleGetCategoryBySlug, handleUpdateCategory, handleDeleteCategory } = require("../controllers/blogsCategoryController");
+const {
+  handleCategoryPost,
+  handleGetAllCategories,
+  handleDeleteCategory,
+} = require("../controllers/blogsCategoryController");
 
+const blockCategory = express.Router();
 
-const blockCategory = express.Router()
+blockCategory.post("/post-category-blogs", handleCategoryPost);  
 
-blockCategory.post("post-category-blogs", handleCategoryPost)
+blockCategory.get("/get-all-category-blogs", handleGetAllCategories);  
 
-blockCategory.get("get-all-category-blogs", handleGetAllCategories)
+blockCategory.delete("/delete-update-category-blogs/:id", handleDeleteCategory);  
 
-blockCategory.get("get-detail-category-blogs/:slug", handleGetCategoryBySlug)
-
-blockCategory.put("put-update-category-blogs/:id", handleUpdateCategory)
-
-blockCategory.delete("delete-update-category-blogs/:id", handleDeleteCategory)
-
-
-module.exports = {blockCategory};
+module.exports = { blockCategory };

@@ -1,6 +1,7 @@
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
 
-const AddBlogsSchema = new mongoose.Schema({
+const AddBlogsSchema = new mongoose.Schema(
+  {
     title: { type: String, required: true },
     slug: { type: String, unique: true },
     shortDescription: String,
@@ -8,9 +9,15 @@ const AddBlogsSchema = new mongoose.Schema({
     author: { type: String, default: "Admin" },
     tags: [String],
     coverImage: { type: String },
-    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" }
-}, { timestamps: true });
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+    },
+  },
+  { timestamps: true }
+);
 
-const AddBlogs = mongoose.model("AddBlogs", AddBlogsSchema)
+// Prevent overwrite error in development
+const AddBlogs = mongoose.models.AddBlogs || mongoose.model("AddBlogs", AddBlogsSchema);
 
 module.exports = AddBlogs;
