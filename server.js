@@ -44,6 +44,7 @@ const { seminarData } = require("./routes/seminarRouter");
 const { userSeminar } = require("./routes/userSeminarRegistrationRoute");
 const { paymentWithdrawalRoutes } = require("./routes/paymentWithdrawalRouter");
 const { blockCategory } = require("./routes/blogsCategoryRouter");
+const { addBlogs } = require("./routes/addBlogsRouter");
 
 const app = express();
 // secure API use helmet call
@@ -134,6 +135,7 @@ app.use("/", seminarData);
 app.use("/", userSeminar);
 app.use("/", paymentWithdrawalRoutes);
 app.use("/", blockCategory);
+app.use("/", addBlogs);
 
 // Pass io to socketIoMessage in post chat api
 socketIoMessage(io);
