@@ -189,19 +189,36 @@ const handleGetDetailPaymentWithdrawal = async (req, res) => {
             return res.status(400).json({ error: "Invalid astrologer phone number" });
         }
 
-        // Find all withdrawals matching the astrologerPhone
-        const withdrawals = await PaymentWithdraw.find({ astrologerPhone: Number(astrologerPhone) });
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
-        if (!withdrawals || withdrawals.length === 0) {
-            return res.status(404).json({ error: "No withdrawal records found for this astrologer" });
-        }
+        // Find total number of withdrawals for the astrologer
+        const total = await PaymentWithdraw.countDocuments({ astrologerPhone: Number(astrologerPhone) });
 
-        res.status(200).json(withdrawals);
+        // Find withdrawals with pagination
+        const withdrawals = await PaymentWithdraw.find({ astrologerPhone: Number(astrologerPhone) })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const totalPages = Math.ceil(total / limit);
+
+        // Send the response with pagination details
+        res.status(200).json({
+            currentPage: page,
+            totalPages,
+            totalItems: total,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            data: withdrawals,
+        });
     } catch (error) {
         console.error("Error fetching withdrawal:", error);
         res.status(500).json({ error: "Error fetching withdrawal", message: error.message });
     }
 };
+
 
 
 
@@ -253,7 +270,7 @@ const handlePutPaymentWithdrawal = async (req, res) => {
             new: true,
             runValidators: true,
         });
-            console.log("astrologer==1",previous,updated);
+        console.log("astrologer==1", previous, updated);
 
         if (!updated) {
             return res.status(404).json({ error: "Withdrawal not found" });
@@ -261,11 +278,11 @@ const handlePutPaymentWithdrawal = async (req, res) => {
 
         // ✅ Trigger email if status changed to approved
         if (
-            updateData.status == "approved"           
+            updateData.status == "approved"
         ) {
             const astrologer = await PaymentWithdraw.findById(updated._id);
-            console.log("astrologer==",astrologer);
-            
+            console.log("astrologer==", astrologer);
+
             if (astrologer?.adminEmail) {
                 await sendSuccessEmailToAstrologer(astrologer.adminEmail, astrologer.name, updated);
             }
