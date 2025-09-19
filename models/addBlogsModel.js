@@ -7,8 +7,8 @@ const AddBlogsSchema = new mongoose.Schema(
     shortDescription: String,
     content: String,
     author: { type: String, default: "Admin" },
-    tags: [String],
     coverImage: { type: String },
+    cloudinary_id: String,
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
