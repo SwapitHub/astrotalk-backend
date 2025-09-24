@@ -54,8 +54,8 @@ const server = http.createServer(app);
 const allowedOrigins = [
   "https://astrotalk-front-end.vercel.app",
   "http://72.60.101.71:3000",
-  "https://astro.weddingbyte.com",
-  "https://astro.weddingbyte.com/api",
+  "http://astro.weddingbyte.com",
+  "http://astro.weddingbyte.com/api",
   "http://localhost:3000",
 ];
 
