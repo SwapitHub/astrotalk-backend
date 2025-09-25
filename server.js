@@ -88,6 +88,7 @@ const io = new Server(server, {
   pingTimeout: 30000,
   pingInterval: 25000,
   cookie: false,
+   path: "/api/socket.io/",
 });
 
 const PORT = process.env.PORT || 8080;
