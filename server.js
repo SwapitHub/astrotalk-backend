@@ -49,7 +49,7 @@ const { addBlogs } = require("./routes/addBlogsRouter");
 const app = express();
 // secure API use helmet call
 app.use(helmet());
-// Public folder serve करना
+// Public folder serve 
 app.use("/public", express.static("public"));
 
 const server = http.createServer(app);
@@ -109,7 +109,7 @@ connectMongoDb(
   "mongodb+srv://swapitshamsher:Eb25QUq9aEt27aSQ@astrologer.euynurr.mongodb.net/astrotalk?retryWrites=true&w=majority&appName=astrologer"
 );
 
-app.use(express.json());
+// app.use(express.json());
 // user connect chatting socket.io
 
 // routes

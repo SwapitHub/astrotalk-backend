@@ -1,5 +1,6 @@
 const AddGallery = require("../models/addGalleryModel");
-const cloudinary = require("../config/cloudinary");
+const fs = require("fs");
+const path = require("path");
 
 
 const getDetailGalleryByAstroOrMobile = async (req, res) => {
@@ -35,7 +36,7 @@ const getDetailGalleryByAstroOrMobile = async (req, res) => {
 
 const deleteGalleryAstrologer = async (req, res) => {
   try {
-    const { cloudinary_id } = req.query;
+    const { cloudinary_id } = req.query; 
 
     if (!cloudinary_id) {
       return res.status(400).json({ message: "cloudinary_id is required" });
@@ -44,19 +45,30 @@ const deleteGalleryAstrologer = async (req, res) => {
     const gallery = await AddGallery.findOne({ "multipleImages.cloudinary_id": cloudinary_id });
 
     if (!gallery) {
-      return res.status(404).json({ message: "Image not found" });
+      return res.status(404).json({ message: "Image not found in DB" });
     }
 
-    await cloudinary.uploader.destroy(cloudinary_id);
-
-    gallery.multipleImages = gallery.multipleImages.filter(
-      (img) => img.cloudinary_id !== cloudinary_id
+    const imageObj = gallery.multipleImages.find(
+      (img) => img.cloudinary_id === cloudinary_id
     );
 
-    await gallery.save();
+    if (imageObj) {
+      const filePath = path.join(__dirname, "..", imageObj.img_url.replace(/^\//, ""));
+      
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath); // delete file
+      }
+
+      // 2️⃣ remove DB 
+      gallery.multipleImages = gallery.multipleImages.filter(
+        (img) => img.cloudinary_id !== cloudinary_id
+      );
+      await gallery.save();
+    }
 
     res.status(200).json({ message: "Image deleted successfully", data: gallery });
   } catch (err) {
+    console.error("Delete error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
