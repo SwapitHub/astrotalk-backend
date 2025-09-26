@@ -78,12 +78,13 @@ app.options("*", cors());
 
 // === SOCKET.IO ===
 const io = new Server(server, {
-  cors: {
-    origin: ["https://astro.weddingbyte.com", "http://localhost:3000"],
-    credentials: true
-  },
-  transports: ["websocket", "polling"]
+  path: "/api/socket.io",
+  cors: { origin: ["https://astro.weddingbyte.com", "http://localhost:3000"], credentials: true },
+  transports: ["websocket", "polling"],
+  pingInterval: 25000,
+  pingTimeout: 60000
 });
+
 
 io.on("connection", (socket) => {
   console.log("New client connected:", socket.id);
