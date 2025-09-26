@@ -74,7 +74,7 @@ const postGalleryAstrologer = async (req, res) => {
     }
 
     const newImages = files.map((file) => ({
-      img_url: file.path,
+      img_url: `/public/uploads/${file.filename}`,
       cloudinary_id: file.filename,
     }));
 

@@ -49,6 +49,8 @@ const { addBlogs } = require("./routes/addBlogsRouter");
 const app = express();
 // secure API use helmet call
 app.use(helmet());
+// Public folder serve करना
+app.use("/public", express.static("public"));
 
 const server = http.createServer(app);
 const allowedOrigins = [
