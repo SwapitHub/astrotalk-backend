@@ -79,21 +79,28 @@ app.options("*", cors());
 // === SOCKET.IO ===
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true,
+    origin: ["https://astro.weddingbyte.com", "http://localhost:3000"],
+    credentials: true
   },
-  transports: ["websocket", "polling"],
-  allowUpgrades: true,
-  pingTimeout: 30000,
-  pingInterval: 25000,
-  cookie: false,
+  transports: ["websocket", "polling"]
+});
+
+io.on("connection", (socket) => {
+  console.log("New client connected:", socket.id);
+
+  socket.on("message", (data) => {
+    console.log("Message received:", data);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+  });
 });
 
 const PORT = process.env.PORT || 8080;
 
 app.use(express.json());
-app.use(cors());
+// app.use(cors());
 
 // mongo db connection
 
