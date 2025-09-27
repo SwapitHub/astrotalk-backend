@@ -45,12 +45,15 @@ const { userSeminar } = require("./routes/userSeminarRegistrationRoute");
 const { paymentWithdrawalRoutes } = require("./routes/paymentWithdrawalRouter");
 const { blockCategory } = require("./routes/blogsCategoryRouter");
 const { addBlogs } = require("./routes/addBlogsRouter");
+const path = require("path");
 
 const app = express();
 // secure API use helmet call
 app.use(helmet());
 // Public folder serve 
-app.use("/public", express.static("public"));
+// app.use("/public", express.static("public"));
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+
 
 const server = http.createServer(app);
 const allowedOrigins = [
