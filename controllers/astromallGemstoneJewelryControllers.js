@@ -1,5 +1,6 @@
-const cloudinary = require("../config/cloudinary");
 const astroMallGemJewelryListing = require("../models/astromallGemstoneJewelryModel");
+const fs = require("fs");
+const path = require("path");
 
 // const getAstroShopeProductByShopId = async (req, res) => {
 //   try {
@@ -43,8 +44,23 @@ const deleteAstroShopeGemstoneJewelry = async (req, res) => {
     }
 
     // Step 2: Delete image from Cloudinary
-    if (product.cloudinary_id) {
-      await cloudinary.uploader.destroy(product.cloudinary_id);
+    if (product.astroGemstoneJewelryImg) {
+      // Remove '/public' prefix if it exists, so path.join works correctly
+      const imageRelativePath = product.astroGemstoneJewelryImg.startsWith(
+        "/public"
+      )
+        ? product.astroGemstoneJewelryImg.replace("/public", "")
+        : product.astroGemstoneJewelryImg;
+
+      const imageFullPath = path.join(
+        __dirname,
+        "../public",
+        imageRelativePath
+      );
+
+      if (fs.existsSync(imageFullPath)) {
+        fs.unlinkSync(imageFullPath);
+      }
     }
 
     // Step 3: Delete product from MongoDB
@@ -62,7 +78,7 @@ const deleteAstroShopeGemstoneJewelry = async (req, res) => {
 const updateAstroShopeGemstoneJewelry = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, actual_price,productType } = req.body;
+    const { name, actual_price, productType } = req.body;
 
     const existingProduct = await astroMallGemJewelryListing.findById(id);
     if (!existingProduct) {
@@ -73,11 +89,27 @@ const updateAstroShopeGemstoneJewelry = async (req, res) => {
     let updatedCloudinaryId = existingProduct.cloudinary_id;
 
     if (req.file) {
-      if (existingProduct.cloudinary_id) {
-        await cloudinary.uploader.destroy(existingProduct.cloudinary_id);
+      if (existingProduct.astroGemstoneJewelryImg) {
+        // Remove leading /public or adjust path depending on how you save it
+        const oldImageRelativePath =
+          existingProduct.astroGemstoneJewelryImg.startsWith("/public")
+            ? existingProduct.astroGemstoneJewelryImg.replace("/public", "")
+            : existingProduct.astroGemstoneJewelryImg;
+
+        // Build full path on disk
+        const oldImageFullPath = path.join(
+          __dirname,
+          "../public",
+          oldImageRelativePath
+        );
+
+        // Delete file if exists
+        if (fs.existsSync(oldImageFullPath)) {
+          fs.unlinkSync(oldImageFullPath);
+        }
       }
 
-      updatedImagePath = req.file.path;
+      updatedImagePath = `/public/uploads/${req.file.filename}`;
       updatedCloudinaryId = req.file.filename;
     }
 
@@ -89,7 +121,6 @@ const updateAstroShopeGemstoneJewelry = async (req, res) => {
         productType,
         astroGemstoneJewelryImg: updatedImagePath, // ✅ correct
         cloudinary_id: updatedCloudinaryId,
-        
       },
       { new: true }
     );
@@ -105,7 +136,6 @@ const updateAstroShopeGemstoneJewelry = async (req, res) => {
       .json({ message: "Internal Server Error", detail: error.message });
   }
 };
-
 
 const getAstroShopeGemstoneJewelryDetail = async (req, res) => {
   try {
@@ -156,15 +186,13 @@ const getAstroShopeGemstoneJewelry = async (req, res) => {
 
 const postAstroShopeGemstoneJewelry = async (req, res) => {
   try {
-    const { name, actual_price,productType } = req.body;
+    const { name, actual_price, productType } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: "Image is required." });
     }
 
-    
-
-    const astroGemstoneJewelryImg = req.file.path;
+    const astroGemstoneJewelryImg = `/public/uploads/${req.file.filename}`;
     const cloudinary_id = req.file.filename;
 
     const newItem = new astroMallGemJewelryListing({
@@ -172,7 +200,7 @@ const postAstroShopeGemstoneJewelry = async (req, res) => {
       actual_price,
       astroGemstoneJewelryImg,
       cloudinary_id,
-      productType
+      productType,
     });
 
     const saved = await newItem.save();
