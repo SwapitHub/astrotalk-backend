@@ -51,7 +51,7 @@ const app = express();
 // secure API use helmet call
 app.use(helmet());
 // Public folder serve 
-// app.use("/public", express.static("public"));
+app.use("/public", express.static("public"));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 
