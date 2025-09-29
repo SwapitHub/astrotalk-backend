@@ -1,60 +1,36 @@
 const mongoose = require("mongoose");
 
-const paymentWithdrawSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, "Name is required"],
-    trim: true,
-  },
-  upiId: {
-    type: String,
-    required: [true, "UPI ID is required"],
-    trim: true,
-    lowercase: true,
-  },
+const paymentWithdrawSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    upiId: { type: String, required: true, trim: true, lowercase: true },
+    holderName: { type: String, required: true, trim: true },
+    bankName: { type: String, required: true, trim: true },
+    accountNumber: { type: String, required: true, trim: true },
+    ifscCode: { type: String, required: true, trim: true, uppercase: true },
 
-  holderName: {
-    type: String,
-    required: [true, "Account holder name is required"],
-    trim: true,
-  },
-   adminEmail: {
-    type: String,
-    required: [true, "admin Email is required"],
-    trim: true,
-  },
-  astrologerPhone: Number,
-  bankName: {
-    type: String,
-    required: [true, "Bank name is required"],
-    trim: true,
-  },
-  accountNumber: {
-    type: String,
-    required: [true, "Account number is required"],
-    trim: true,
-  },
-  ifscCode: {
-    type: String,
-    required: [true, "IFSC code is required"],
-    trim: true,
-    uppercase: true,
-  },
+    // ✅ New fields to match frontend
+    totalACBalance: { type: Number, default: 0 },
+    balanceRemaining: { type: Number, default: 0 },
+    remarks: { type: String, trim: true },
+    AstrologerEmail: { type: String, trim: true },
 
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: false,
+    adminEmail: { type: String, required: true, trim: true },
+    astrologerPhone: { type: String, trim: true },
+
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
   },
+  { timestamps: true }
+);
 
-  status: {
-    type: String,
-    enum: ["pending", "approved", "rejected"],
-    default: "pending",
-  }
-}, {
-  timestamps: true 
-});
-
-const PaymentWithdraw = mongoose.model("PaymentWithdraw", paymentWithdrawSchema);
+const PaymentWithdraw = mongoose.model(
+  "PaymentWithdraw",
+  paymentWithdrawSchema
+);
 module.exports = PaymentWithdraw;

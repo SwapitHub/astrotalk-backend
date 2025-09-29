@@ -8,6 +8,7 @@ const {
   getAstrologerDetail,
   registerAstrologer,
   deleteAstrologerList,
+  updateAstroAnyField,
 } = require("../controllers/astrologerController");
 
 const upload = require("../middlewares/multerConfig");
@@ -31,5 +32,8 @@ astrologerRoutes.post(
 );
 
 astrologerRoutes.put("/update-astro-status/:id", updateAstroStatus);
+astrologerRoutes.put("/put-any-field-astrologer-registration/:mobileNumber", updateAstroAnyField);
+
+
 
 module.exports = { astrologerRoutes };

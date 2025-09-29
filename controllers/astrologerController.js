@@ -126,8 +126,13 @@ const registerAstrologer = async (req, res, next) => {
         .json({ error: "Email or mobile number already registered" });
     }
 
-    const aadhaarCard = req.files?.aadhaarCard?.[0]?.path || null;
-    const certificate = req.files?.certificate?.[0]?.path || null;
+    const aadhaarCard = req.files?.aadhaarCard?.[0]?.filename
+      ? `/public/uploads/${req.files.aadhaarCard[0].filename}`
+      : null;
+
+    const certificate = req.files?.certificate?.[0]?.filename
+      ? `/public/uploads/${req.files.certificate[0].filename}`
+      : null;
 
     const newAstrologer = new AstrologerRegistration({
       name,
@@ -194,10 +199,40 @@ const updateAstroStatus = async (req, res, next) => {
   }
 };
 
+const updateAstroAnyField = async (req, res) => {
+  const mobileNumber = req.params.mobileNumber;
+  const updateData = req.body;
+
+  if (!updateData || typeof updateData !== "object") {
+    return res.status(400).json({ message: "Update data is required in the body." });
+  }
+
+  try {
+    const updatedAstrologer = await AstrologerRegistration.findOneAndUpdate(
+      { mobileNumber },
+      { $set: updateData },
+      { new: true }
+    );
+
+    if (!updatedAstrologer) {
+      return res.status(404).json({ message: "Astrologer not found." });
+    }
+
+    return res.status(200).json({
+      message: "Astrologer updated successfully.",
+      data: updatedAstrologer,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error.", error: error.message });
+  }
+};
+
+
 module.exports = {
   getAstrologerList,
   getAstrologerDetail,
   registerAstrologer,
   updateAstroStatus,
   deleteAstrologerList,
+  updateAstroAnyField,
 };

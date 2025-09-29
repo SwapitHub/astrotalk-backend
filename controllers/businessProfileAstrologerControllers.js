@@ -342,7 +342,6 @@ const getAstrologerProfileFilters = async (req, res) => {
   }
 };
 
-
 const putAstrologerProfile = async (req, res, next) => {
   try {
     const { mobileNumber } = req.params;
@@ -411,16 +410,12 @@ const putAstrologerProfileUpdate = async (req, res) => {
 
     if (professions) {
       updateData.professions =
-        typeof professions === "string"
-          ? JSON.parse(professions)
-          : professions;
+        typeof professions === "string" ? JSON.parse(professions) : professions;
     }
 
     if (languages) {
       updateData.languages =
-        typeof languages === "string"
-          ? JSON.parse(languages)
-          : languages;
+        typeof languages === "string" ? JSON.parse(languages) : languages;
     }
 
     if (experience) updateData.experience = experience;
@@ -430,7 +425,9 @@ const putAstrologerProfileUpdate = async (req, res) => {
     if (gender?.trim()) updateData.gender = gender.trim();
 
     // Get existing profile to handle image replacement
-    const existingProfile = await businessProfileAstrologer.findOne({ mobileNumber });
+    const existingProfile = await businessProfileAstrologer.findOne({
+      mobileNumber,
+    });
 
     if (!existingProfile) {
       return res.status(404).json({ error: "Astrologer profile not found" });
@@ -438,13 +435,21 @@ const putAstrologerProfileUpdate = async (req, res) => {
 
     // Handle new image upload (optional)
     if (req.file) {
-      // Delete previous image if exists
-      if (existingProfile.cloudinary_id) {
-        await cloudinary.uploader.destroy(existingProfile.cloudinary_id);
+      // Remove old image from local uploads folder
+      if (existingProfile.profileImage) {
+        const oldImagePath = path.join(
+          __dirname,
+          "../",
+          existingProfile.profileImage
+        );
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
       }
 
-      updateData.profileImage = req.file.path;
-      updateData.cloudinary_id = req.file.filename;
+      // Save new image info
+      updateData.profileImage = `/public/uploads/${req.file.filename}`;
+      updateData.cloudinary_id = req.file.filename; // keep if needed
     }
 
     // Perform the update
@@ -467,7 +472,6 @@ const putAstrologerProfileUpdate = async (req, res) => {
     return res.status(500).json({ error: "Failed to update business profile" });
   }
 };
-
 
 const putAstrologerBusesProfileUpdate = async (req, res) => {
   try {
@@ -526,7 +530,6 @@ const putAstrologerBusesProfileUpdate = async (req, res) => {
 };
 
 const postAstrologerProfile = async (req, res) => {
-
   try {
     const {
       name,

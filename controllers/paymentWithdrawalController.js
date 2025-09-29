@@ -107,77 +107,109 @@ const sendPaymentWithdrawSuccessEmail = async (userName, withdrawalId, adminEmai
 };
 
 const handlePostPaymentWithdrawal = async (req, res) => {
-    try {
-        const {
-            name,
-            upiId,
-            holderName,
-            bankName,
-            accountNumber,
-            ifscCode,
-            userId,
-            adminEmail,
-            astrologerPhone,
-        } = req.body;
+  try {
+    const {
+      name,
+      upiId,
+      holderName,
+      bankName,
+      accountNumber,
+      ifscCode,
+      totalACBalance,
+      balanceRemaining,
+      remarks,
+      AstrologerEmail,
+      adminEmail,
+      astrologerPhone,
+      userId,
+    } = req.body;
 
-        const newRequest = new PaymentWithdraw({
-            name,
-            upiId,
-            holderName,
-            bankName,
-            accountNumber,
-            ifscCode,
-            userId,
-            adminEmail,
-            astrologerPhone
-        });
+    const newRequest = new PaymentWithdraw({
+      name,
+      upiId,
+      holderName,
+      bankName,
+      accountNumber,
+      ifscCode,
+      totalACBalance,
+      balanceRemaining,
+      remarks,
+      AstrologerEmail,
+      adminEmail,
+      astrologerPhone,
+      userId,
+    });
 
-        await newRequest.save();
+    await newRequest.save();
 
-        await sendPaymentWithdrawSuccessEmail(name, newRequest._id, adminEmail);
+    await sendPaymentWithdrawSuccessEmail(
+      name,
+      newRequest._id,
+      adminEmail
+    );
 
-        return res.status(201).json({
-            message: "Withdrawal request submitted successfully",
-            data: newRequest
-        });
-    } catch (error) {
-        console.error("Error creating withdrawal:", error);
-        return res.status(500).json({
-            message: "Failed to submit withdrawal request",
-            error: error.message
-        });
-    }
+    return res.status(201).json({
+      message: "Withdrawal request submitted successfully",
+      data: newRequest,
+    });
+  } catch (error) {
+    console.error("Error creating withdrawal:", error);
+    return res.status(500).json({
+      message: "Failed to submit withdrawal request",
+      error: error.message,
+    });
+  }
 };
+
 
 
 
 const handleGetAllPaymentWithdrawal = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search ? req.query.search.trim() : "";
 
-        const skip = (page - 1) * limit;
-        const total = await PaymentWithdraw.countDocuments();
+    const skip = (page - 1) * limit;
 
-        const data = await PaymentWithdraw.find()
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
-
-        const totalPages = Math.ceil(total / limit);
-
-        res.status(200).json({
-            currentPage: page,
-            totalPages,
-            totalItems: total,
-            hasNextPage: page < totalPages,
-            hasPrevPage: page > 1,
-            data,
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Error fetching withdrawals", message: error.message });
+    // ✅ Create dynamic search filter
+    let filter = {};
+    if (search) {
+      filter = {
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { holderName: { $regex: search, $options: "i" } },
+          { accountNumber: { $regex: search, $options: "i" } },
+          { userEmail: { $regex: search, $options: "i" } },
+          { astrologerPhone: { $regex: search, $options: "i" } },
+        ],
+      };
     }
+
+    const total = await PaymentWithdraw.countDocuments(filter);
+
+    const data = await PaymentWithdraw.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      currentPage: page,
+      totalPages,
+      totalItems: total,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+      data,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Error fetching withdrawals", message: error.message });
+  }
 };
+
 
 
 const handleGetDetailPaymentWithdrawal = async (req, res) => {
@@ -261,41 +293,50 @@ const sendSuccessEmailToAstrologer = async (toEmail, astrologerName, withdrawDat
 
 
 const handlePutPaymentWithdrawal = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updateData = req.body;
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
 
-        const previous = await PaymentWithdraw.findById(id);
-        const updated = await PaymentWithdraw.findByIdAndUpdate(id, updateData, {
-            new: true,
-            runValidators: true,
-        });
-        console.log("astrologer==1", previous, updated);
+    // Fetch the existing document first
+    const existing = await PaymentWithdraw.findById(id);
 
-        if (!updated) {
-            return res.status(404).json({ error: "Withdrawal not found" });
-        }
-
-        // ✅ Trigger email if status changed to approved
-        if (
-            updateData.status == "approved"
-        ) {
-            const astrologer = await PaymentWithdraw.findById(updated._id);
-            console.log("astrologer==", astrologer);
-
-            if (astrologer?.adminEmail) {
-                await sendSuccessEmailToAstrologer(astrologer.adminEmail, astrologer.name, updated);
-            }
-        }
-
-        res.status(200).json({
-            message: "Withdrawal updated successfully",
-            data: updated,
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to update withdrawal", message: error.message });
+    if (!existing) {
+      return res.status(404).json({ error: "Withdrawal not found" });
     }
+
+    // Check for AstrologerEmail (or adminEmail if you meant that)
+    if (!existing.AstrologerEmail) {
+      return res.status(400).json({ error: "Astrologer email is missing. Update not allowed." });
+    }
+
+    // Proceed with update
+    const updated = await PaymentWithdraw.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    // If status changed to approved, send success email
+    if (updateData.status === "approved") {
+      await sendSuccessEmailToAstrologer(
+        existing.AstrologerEmail,
+        existing.name,
+        updated
+      );
+    }
+
+    return res.status(200).json({
+      message: "Withdrawal updated successfully",
+      data: updated,
+    });
+  } catch (error) {
+    console.error("Update error:", error);
+    return res.status(500).json({
+      error: "Failed to update withdrawal",
+      message: error.message,
+    });
+  }
 };
+
 
 
 

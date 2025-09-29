@@ -13,6 +13,7 @@ const userSignUpSchema = new mongoose.Schema({
   blockUnblockAstro: { type: Boolean, required: true },
   aadhaarCard: { type: String }, 
   certificate: { type: String },
+  charges: {type: String},
 }, { timestamps: true }); 
 
 const AstrologerRegistration = mongoose.model("AstrologerRegistration", userSignUpSchema);
