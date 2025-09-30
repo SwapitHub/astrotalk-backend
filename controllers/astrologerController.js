@@ -3,7 +3,7 @@ const AstrologerRegistration = require("../models/astrologerRegistrationModel");
 // ✅ Get List of Astrologers (Filter by astroStatus)
 const getAstrologerList = async (req, res, next) => {
   try {
-    const { astroStatus, page = 1, limit = 10 } = req.query;
+    const { astroStatus, page = 1, limit = 10, search = "" } = req.query;
 
     if (astroStatus === undefined) {
       return res
@@ -15,13 +15,22 @@ const getAstrologerList = async (req, res, next) => {
     const currentPage = parseInt(page);
     const itemsPerPage = parseInt(limit);
 
-    const totalAstrologers = await AstrologerRegistration.countDocuments({
+    // Base filter
+    const filter = {
       astroStatus: statusFilter,
-    });
+    };
 
-    const astrologers = await AstrologerRegistration.find({
-      astroStatus: statusFilter,
-    })
+    // If search query is present, add regex condition
+    if (search.trim() !== "") {
+      filter.$or = [
+        { name: { $regex: search.trim(), $options: "i" } },
+        { mobileNumber: { $regex: search.trim(), $options: "i" } },
+      ];
+    }
+
+    const totalAstrologers = await AstrologerRegistration.countDocuments(filter);
+
+    const astrologers = await AstrologerRegistration.find(filter)
       .sort({ createdAt: -1 })
       .skip((currentPage - 1) * itemsPerPage)
       .limit(itemsPerPage);
@@ -40,6 +49,7 @@ const getAstrologerList = async (req, res, next) => {
     next(error);
   }
 };
+
 
 const deleteAstrologerList = async (req, res) => {
   try {
@@ -69,7 +79,7 @@ const getAstrologerDetail = async (req, res, next) => {
 
     const astrologer = await AstrologerRegistration.findOne({
       mobileNumber,
-      astroStatus: true,
+      // astroStatus: true,
     });
 
     if (!astrologer) {
@@ -145,6 +155,8 @@ const registerAstrologer = async (req, res, next) => {
       astroStatus,
       mobileNumber,
       blockUnblockAstro: false,
+      deleteAstroLoger: false,
+      completeProfile: false,
       aadhaarCard,
       certificate,
     });

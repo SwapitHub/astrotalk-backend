@@ -11,6 +11,8 @@ const userSignUpSchema = new mongoose.Schema({
   astroStatus: { type: Boolean, required: true },
   mobileNumber: { type: String, required: true },
   blockUnblockAstro: { type: Boolean, required: true },
+  deleteAstroLoger: { type: Boolean, required: true },
+  completeProfile: {type: Boolean},
   aadhaarCard: { type: String }, 
   certificate: { type: String },
   charges: {type: String},
