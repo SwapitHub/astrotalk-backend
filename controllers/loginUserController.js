@@ -1,6 +1,37 @@
 const { default: mongoose } = require("mongoose");
 const UserLogin = require("../models/userLoginModel");
 
+const getAllUsersWithWallet = async (req, res) => {
+  try {
+    const result = await UserLogin.aggregate([
+      {
+        $lookup: {
+          from: "wallettransactions", 
+          localField: "_id",
+          foreignField: "user_id",
+          as: "walletTransactions",
+        },
+      },
+      {
+        $match: {
+          "walletTransactions.0": { $exists: true }, // atleast 1 transaction
+        },
+      },
+      { $sort: { createdAt: -1 } }, // latest users first
+    ]);
+
+    return res.status(200).json({
+      message: "success",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
 const getUserLogin = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // current page
@@ -165,4 +196,5 @@ module.exports = {
   getUserLoginDetail,
   updateUser,
   setUserLogin,
+  getAllUsersWithWallet,
 };

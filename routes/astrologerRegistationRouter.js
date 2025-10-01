@@ -9,9 +9,13 @@ const {
   registerAstrologer,
   deleteAstrologerList,
   updateAstroAnyField,
+  getAllAstrologersWithWallet,
 } = require("../controllers/astrologerController");
 
 const upload = require("../middlewares/multerConfig");
+
+astrologerRoutes.get("/get-all-astrologer-with-wallet", getAllAstrologersWithWallet);
+
 
 astrologerRoutes.get("/astrologer-list", getAstrologerList);
 
@@ -32,7 +36,12 @@ astrologerRoutes.post(
 );
 
 astrologerRoutes.put("/update-astro-status/:id", updateAstroStatus);
-astrologerRoutes.put("/put-any-field-astrologer-registration/:mobileNumber", updateAstroAnyField);
+astrologerRoutes.put("/put-any-field-astrologer-registration/:mobileNumber",
+   upload.fields([
+    { name: "aadhaarCard", maxCount: 1 },
+    { name: "certificate", maxCount: 1 },
+  ]),
+  updateAstroAnyField);
 
 
 

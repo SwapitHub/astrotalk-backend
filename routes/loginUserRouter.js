@@ -4,12 +4,14 @@ const {
   getUserLoginDetail,
   updateUser,
   setUserLogin,
+  getAllUsersWithWallet,
 } = require("../controllers/loginUserController");
-const { verifyCommonToken } = require("../utils/publicToken");
 
 const AuthRoutes = express.Router();
 
 // AuthRoutes.use(verifyCommonToken);
+AuthRoutes.get("/get-all-users-with-wallet", getAllUsersWithWallet);
+
 AuthRoutes.get("/user-login", getUserLogin);
 AuthRoutes.get("/user-login-detail/:query", getUserLoginDetail);
 AuthRoutes.put("/update-user/:phoneOrId", updateUser);

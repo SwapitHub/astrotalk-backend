@@ -1,6 +1,48 @@
 const AstrologerRegistration = require("../models/astrologerRegistrationModel");
-
+const fs = require("fs");
+const path = require("path");
 // ✅ Get List of Astrologers (Filter by astroStatus)
+
+const getAllAstrologersWithWallet = async (req, res) => {
+  try {
+    const result = await AstrologerRegistration.aggregate([
+      {
+        $lookup: {
+          from: "wallettransactions",
+          localField: "_id",
+          foreignField: "astrologer_id",
+          as: "walletTransactions",
+        },
+      },
+      {
+        $match: {
+          "walletTransactions.0": { $exists: true }, // sirf un astrologers ko laana jinke paas transactions hain
+        },
+      },
+      { $sort: { createdAt: -1 } }, // latest astrologers first
+    ]);
+
+    if (!result.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No astrologers with wallet transactions found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
 const getAstrologerList = async (req, res, next) => {
   try {
     const { astroStatus, page = 1, limit = 10, search = "" } = req.query;
@@ -28,7 +70,9 @@ const getAstrologerList = async (req, res, next) => {
       ];
     }
 
-    const totalAstrologers = await AstrologerRegistration.countDocuments(filter);
+    const totalAstrologers = await AstrologerRegistration.countDocuments(
+      filter
+    );
 
     const astrologers = await AstrologerRegistration.find(filter)
       .sort({ createdAt: -1 })
@@ -49,7 +93,6 @@ const getAstrologerList = async (req, res, next) => {
     next(error);
   }
 };
-
 
 const deleteAstrologerList = async (req, res) => {
   try {
@@ -213,32 +256,82 @@ const updateAstroStatus = async (req, res, next) => {
 
 const updateAstroAnyField = async (req, res) => {
   const mobileNumber = req.params.mobileNumber;
-  const updateData = req.body;
-
-  if (!updateData || typeof updateData !== "object") {
-    return res.status(400).json({ message: "Update data is required in the body." });
-  }
 
   try {
+    const files = req.files;
+    let updateData = { ...req.body };
+
+    // Handle languages (parse if stringified)
+    if (updateData.languages) {
+      try {
+        updateData.languages = JSON.parse(updateData.languages);
+      } catch {
+        updateData.languages = Array.isArray(updateData.languages)
+          ? updateData.languages
+          : [updateData.languages];
+      }
+    }
+
+    // Fetch current astrologer
+    const existingProfile = await AstrologerRegistration.findOne({
+      mobileNumber,
+    });
+    if (!existingProfile) {
+      return res.status(404).json({ message: "Astrologer not found." });
+    }
+
+    const removeOldFile = (filePath) => {
+      const fullPath = path.join(__dirname, "../", filePath); // go one level up
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    };
+
+    // Aadhaar Card
+    if (files?.aadhaarCard) {
+      if (existingProfile.aadhaarCard) {
+        removeOldFile(existingProfile.aadhaarCard);
+      }
+
+      updateData.aadhaarCard = `/public/uploads/${files.aadhaarCard[0].filename}`;
+    }
+
+    // Certificate
+    if (files?.certificate) {
+      if (existingProfile.certificate) {
+        removeOldFile(existingProfile.certificate);
+      }
+
+      updateData.certificate = `/public/uploads/${files.certificate[0].filename}`;
+    }
+
+    // Profile Image
+    if (files?.profileImage) {
+      if (existingProfile.profileImage) {
+        removeOldFile(existingProfile.profileImage);
+      }
+
+      updateData.profileImage = `/public/uploads/${files.profileImage[0].filename}`;
+    }
+
+    // Final DB update
     const updatedAstrologer = await AstrologerRegistration.findOneAndUpdate(
       { mobileNumber },
       { $set: updateData },
       { new: true }
     );
 
-    if (!updatedAstrologer) {
-      return res.status(404).json({ message: "Astrologer not found." });
-    }
-
     return res.status(200).json({
-      message: "Astrologer updated successfully.",
+      message: "success",
       data: updatedAstrologer,
     });
   } catch (error) {
-    return res.status(500).json({ message: "Server error.", error: error.message });
+    return res.status(500).json({
+      message: "Server error.",
+      error: error.message,
+    });
   }
 };
-
 
 module.exports = {
   getAstrologerList,
@@ -247,4 +340,5 @@ module.exports = {
   updateAstroStatus,
   deleteAstrologerList,
   updateAstroAnyField,
+  getAllAstrologersWithWallet,
 };
