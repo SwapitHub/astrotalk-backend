@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const userSignUpSchema = new mongoose.Schema({
+const astrologerSignUpSchema = new mongoose.Schema({
   name: { type: String, required: true },
   dateOfBirth: { type: String, required: true },
   gender: { type: String, required: true },
@@ -18,5 +18,5 @@ const userSignUpSchema = new mongoose.Schema({
   charges: {type: String},
 }, { timestamps: true }); 
 
-const AstrologerRegistration = mongoose.model("AstrologerRegistration", userSignUpSchema);
+const AstrologerRegistration = mongoose.model("AstrologerRegistration", astrologerSignUpSchema);
 module.exports = AstrologerRegistration;

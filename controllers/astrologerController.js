@@ -1,11 +1,35 @@
 const AstrologerRegistration = require("../models/astrologerRegistrationModel");
 const fs = require("fs");
 const path = require("path");
+const businessProfileAstrologer = require("../models/businessProfileAstrologerModel");
+const WalletTransaction = require("../models/transactionsUserModel");
 // ✅ Get List of Astrologers (Filter by astroStatus)
 
 const getAllAstrologersWithWallet = async (req, res) => {
-  try {
-    const result = await AstrologerRegistration.aggregate([
+ try {
+    const page = parseInt(req.query.page) || 1; 
+    const limit = parseInt(req.query.limit) || 10; 
+    const search = req.query.search || "";
+
+    const skip = (page - 1) * limit;
+
+    const matchConditions = [];
+
+    matchConditions.push({
+      "walletTransactions.0": { $exists: true },
+    });
+
+    if (search) {
+      matchConditions.push({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { mobileNumber: { $regex: search, $options: "i" } },
+        ],
+      });
+    }
+
+    // Aggregation pipeline
+    const aggregatePipeline = [
       {
         $lookup: {
           from: "wallettransactions",
@@ -16,30 +40,95 @@ const getAllAstrologersWithWallet = async (req, res) => {
       },
       {
         $match: {
-          "walletTransactions.0": { $exists: true }, // sirf un astrologers ko laana jinke paas transactions hain
+          $and: matchConditions,
         },
       },
-      { $sort: { createdAt: -1 } }, // latest astrologers first
-    ]);
+      {
+        $sort: { createdAt: -1 },
+      },
+    ];
 
-    if (!result.length) {
-      return res.status(404).json({
-        success: false,
-        message: "No astrologers with wallet transactions found",
-      });
-    }
+    // Clone pipeline for count
+    const countPipeline = [...aggregatePipeline, { $count: "total" }];
+    const totalCountResult = await businessProfileAstrologer.aggregate(countPipeline);
+    const totalUsers = totalCountResult[0]?.total || 0;
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    // Add pagination
+    aggregatePipeline.push({ $skip: skip }, { $limit: limit });
+
+    // Execute paginated query
+    const users = await businessProfileAstrologer.aggregate(aggregatePipeline);
 
     return res.status(200).json({
-      success: true,
-      count: result.length,
-      data: result,
+      message: "success",
+      currentPage: page,
+      totalPages,
+      totalUsers,
+      data: users,
     });
   } catch (error) {
+    console.error("Error fetching users with wallet:", error);
     return res.status(500).json({
-      success: false,
       message: "Server error",
       error: error.message,
     });
+  }
+};
+
+
+const getAllAstrologersWithWalletDetail = async (req, res) => {
+  try {
+    const mobileNumber = req.params.mobileNumber;
+    const { page = 1, limit = 10, search = "" } = req.query; 
+
+    if (!mobileNumber) {
+      return res.status(400).json({ message: "Phone number is required" });
+    }
+
+    const astrologer = await businessProfileAstrologer.findOne({ mobileNumber });
+
+    if (!astrologer) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Build search filter for transactions
+    let filter = { astrologer_id: astrologer._id };
+    if (search) {
+      filter.$or = [
+        { transactionId: { $regex: search, $options: "i" } }, // if transactionId field exists
+        { type: { $regex: search, $options: "i" } }, // search by type (credit/debit/astro_product etc.)
+        { status: { $regex: search, $options: "i" } } // search by status (success/pending/failed)
+      ];
+    }
+
+    // Pagination calculation
+    const skip = (page - 1) * limit;
+
+    const [transactions, totalCount] = await Promise.all([
+      WalletTransaction.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      WalletTransaction.countDocuments(filter)
+    ]);
+
+    return res.status(200).json({
+      message: "success",
+      astrologer,
+      transactions,
+      pagination: {
+        total: totalCount,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(totalCount / limit),
+        hasNextPage: page * limit < totalCount,
+        hasPrevPage: page > 1
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching user wallet details:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -341,4 +430,5 @@ module.exports = {
   deleteAstrologerList,
   updateAstroAnyField,
   getAllAstrologersWithWallet,
+  getAllAstrologersWithWalletDetail
 };

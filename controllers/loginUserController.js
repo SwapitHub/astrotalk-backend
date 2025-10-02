@@ -1,12 +1,35 @@
 const { default: mongoose } = require("mongoose");
 const UserLogin = require("../models/userLoginModel");
+const WalletTransaction = require("../models/transactionsUserModel");
 
 const getAllUsersWithWallet = async (req, res) => {
   try {
-    const result = await UserLogin.aggregate([
+    const page = parseInt(req.query.page) || 1; 
+    const limit = parseInt(req.query.limit) || 10; 
+    const search = req.query.search || "";
+
+    const skip = (page - 1) * limit;
+
+    const matchConditions = [];
+
+    matchConditions.push({
+      "walletTransactions.0": { $exists: true },
+    });
+
+    if (search) {
+      matchConditions.push({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { mobileNumber: { $regex: search, $options: "i" } },
+        ],
+      });
+    }
+
+    // Aggregation pipeline
+    const aggregatePipeline = [
       {
         $lookup: {
-          from: "wallettransactions", 
+          from: "wallettransactions",
           localField: "_id",
           foreignField: "user_id",
           as: "walletTransactions",
@@ -14,23 +37,97 @@ const getAllUsersWithWallet = async (req, res) => {
       },
       {
         $match: {
-          "walletTransactions.0": { $exists: true }, // atleast 1 transaction
+          $and: matchConditions,
         },
       },
-      { $sort: { createdAt: -1 } }, // latest users first
-    ]);
+      {
+        $sort: { createdAt: -1 },
+      },
+    ];
+
+    // Clone pipeline for count
+    const countPipeline = [...aggregatePipeline, { $count: "total" }];
+    const totalCountResult = await UserLogin.aggregate(countPipeline);
+    const totalUsers = totalCountResult[0]?.total || 0;
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    // Add pagination
+    aggregatePipeline.push({ $skip: skip }, { $limit: limit });
+
+    // Execute paginated query
+    const users = await UserLogin.aggregate(aggregatePipeline);
 
     return res.status(200).json({
       message: "success",
-      data: result,
+      currentPage: page,
+      totalPages,
+      totalUsers,
+      data: users,
     });
   } catch (error) {
+    console.error("Error fetching users with wallet:", error);
     return res.status(500).json({
       message: "Server error",
       error: error.message,
     });
   }
 };
+
+const getAllUsersWithWalletDetail = async (req, res) => {
+  try {
+    const phone = req.params.phone;
+    const { page = 1, limit = 10, search = "" } = req.query; 
+
+    if (!phone) {
+      return res.status(400).json({ message: "Phone number is required" });
+    }
+
+    const user = await UserLogin.findOne({ phone });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Build search filter for transactions
+    let filter = { user_id: user._id };
+    if (search) {
+      filter.$or = [
+        { transactionId: { $regex: search, $options: "i" } }, // if transactionId field exists
+        { type: { $regex: search, $options: "i" } }, // search by type (credit/debit/astro_product etc.)
+        { status: { $regex: search, $options: "i" } } // search by status (success/pending/failed)
+      ];
+    }
+
+    // Pagination calculation
+    const skip = (page - 1) * limit;
+
+    const [transactions, totalCount] = await Promise.all([
+      WalletTransaction.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      WalletTransaction.countDocuments(filter)
+    ]);
+
+    return res.status(200).json({
+      message: "success",
+      user,
+      transactions,
+      pagination: {
+        total: totalCount,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(totalCount / limit),
+        hasNextPage: page * limit < totalCount,
+        hasPrevPage: page > 1
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching user wallet details:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 
 const getUserLogin = async (req, res) => {
   try {
@@ -197,4 +294,5 @@ module.exports = {
   updateUser,
   setUserLogin,
   getAllUsersWithWallet,
+  getAllUsersWithWalletDetail,
 };

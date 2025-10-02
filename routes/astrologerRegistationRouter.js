@@ -10,9 +10,13 @@ const {
   deleteAstrologerList,
   updateAstroAnyField,
   getAllAstrologersWithWallet,
+  getAllAstrologersWithWalletDetail,
 } = require("../controllers/astrologerController");
 
 const upload = require("../middlewares/multerConfig");
+
+astrologerRoutes.get("/get-all-astrologer-with-wallet-detail/:mobileNumber", getAllAstrologersWithWalletDetail);
+
 
 astrologerRoutes.get("/get-all-astrologer-with-wallet", getAllAstrologersWithWallet);
 
