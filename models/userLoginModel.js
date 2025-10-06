@@ -10,8 +10,10 @@ const UserLoginSchema = new mongoose.Schema(
     language: { type: String, required: false },
     totalAmount: { type: Number, required: false },
     phone: { type: Number, required: true },
+    deleteUser: Boolean,
+    blockUser:Boolean,
     freeChatStatus: Boolean,
-     chatStatus: Boolean,
+    chatStatus: Boolean,
   },
   { timestamps: true }
 );

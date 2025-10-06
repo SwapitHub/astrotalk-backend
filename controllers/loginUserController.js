@@ -131,8 +131,8 @@ const getAllUsersWithWalletDetail = async (req, res) => {
 
 const getUserLogin = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // current page
-    const limit = parseInt(req.query.limit) || 10; // items per page
+    const page = parseInt(req.query.page) || 1; 
+    const limit = parseInt(req.query.limit) || 10; 
 
     const skip = (page - 1) * limit;
 
@@ -261,6 +261,8 @@ const setUserLogin = async (req, res) => {
       totalAmount,
       freeChatStatus,
       chatStatus: false,
+      deleteUser: false,
+      blockUser: false,
     });
 
     await newUser.save();
