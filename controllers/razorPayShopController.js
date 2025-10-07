@@ -69,7 +69,14 @@ const getRazorpayShopOrderDetail = async (req, res) => {
 
 const getRazorpayShopOrders = async (req, res) => {
   try {
-    const { page = 1, limit = 10, productType, userMobile, astrologerName, search } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      productType,
+      userMobile,
+      astrologerName,
+      search,
+    } = req.query;
 
     const pageNumber = parseInt(page);
     const pageLimit = parseInt(limit);
@@ -86,11 +93,11 @@ const getRazorpayShopOrders = async (req, res) => {
       query.userMobile = userMobile.trim();
     }
 
-     if (astrologerName && astrologerName.trim() !== "") {
+    if (astrologerName && astrologerName.trim() !== "") {
       query.astrologerName = astrologerName.trim();
     }
 
-  // Smart Search
+    // Smart Search
     if (search && search.trim() !== "") {
       const searchValue = search.trim();
       const searchRegex = { $regex: searchValue, $options: "i" };
@@ -100,14 +107,15 @@ const getRazorpayShopOrders = async (req, res) => {
       // Try regex on string fields
       query.$or.push({ astrologerName: searchRegex });
       query.$or.push({ productName: searchRegex });
-       query.$or.push({ order_id: searchRegex });
+      query.$or.push({ order_id: searchRegex });
+      query.$or.push({ "addresses.name": searchRegex });
 
       // If search is a number, search number fields exactly
       if (!isNaN(searchValue)) {
         query.$or.push({ userMobile: Number(searchValue) });
       }
     }
-    
+
     const totalOrders = await UserPaymentShop.countDocuments(query);
 
     const orders = await UserPaymentShop.find(query)
@@ -115,12 +123,19 @@ const getRazorpayShopOrders = async (req, res) => {
       .limit(pageLimit)
       .sort({ createdAt: -1 });
 
+    // Calculate the total admin commission for all the fetched orders
+    const totalAdminCommission = orders.reduce(
+      (sum, order) => sum + order.adminCommission,
+      0
+    );
+
     const totalPages = Math.ceil(totalOrders / pageLimit);
     const hasNextPage = pageNumber < totalPages;
     const hasPrevPage = pageNumber > 1;
 
     res.json({
       orders,
+      totalAdminCommission,
       pagination: {
         currentPage: pageNumber,
         totalPages,
