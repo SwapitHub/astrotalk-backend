@@ -12,6 +12,7 @@ const upload = require("../middlewares/multerConfig");
 const astroShopList = express.Router();
 
 astroShopList.get("/get-astro-shope-list", getAstroShopeList);
+
 astroShopList.get(
   "/get-astro-shope-list-services",
   getAstroShopeListBasedServices

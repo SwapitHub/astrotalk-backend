@@ -313,12 +313,34 @@ const getAstroProductDetail = async (req, res) => {
 
 const getAstroShopeProduct = async (req, res) => {
   try {
+    const { page = 1, limit = 10, search = "" } = req.query;
+
+    const query = {};
+
+    if (search) {
+      query.offer_name = { $regex: search, $options: "i" }; 
+    }
+
+    const skip = (page - 1) * limit; 
     const productItems = await astroMallProductListing
-      .find()
+      .find(query)
+      .skip(skip)
+      .limit(Number(limit))
       .sort({ createdAt: -1 });
+
+    const totalCount = await astroMallProductListing.countDocuments(query);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
     res.status(200).json({
       message: "success",
       data: productItems,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        totalCount: totalCount,
+        totalPages: totalPages,
+      },
     });
   } catch (error) {
     console.error("Error fetching astro product list:", error);
@@ -337,7 +359,6 @@ const getAstroShopProductSuggestions = async (req, res) => {
       return res.status(400).json({ message: "Query parameter is required." });
     }
 
-    // Search by product name, return full product documents
     const matchingProducts = await astroMallProductListing
       .find({
         name: { $regex: query, $options: "i" },

@@ -1,10 +1,10 @@
 const astroMallShopListing = require("../models/astroMallShopListingModel");
 const cloudinary = require("../config/cloudinary");
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const getAstroShopeDetail = async (req, res) => {
   try {
-    const { identifier } = req.params; 
+    const { identifier } = req.params;
 
     let query = {};
 
@@ -72,7 +72,7 @@ const updateAstroShopeList = async (req, res) => {
       slug,
       Jewelry_product_gem,
       discount_product,
-      detail_shop_information
+      detail_shop_information,
     } = req.body;
 
     const shop = await astroMallShopListing.findById(id);
@@ -108,7 +108,7 @@ const updateAstroShopeList = async (req, res) => {
         discount_product,
         astroMallImg: updatedImagePath,
         cloudinary_id: updatedCloudinaryId,
-        detail_shop_information
+        detail_shop_information,
       },
       { new: true }
     );
@@ -149,10 +149,32 @@ const getAstroShopeListBasedServices = async (req, res) => {
 
 const getAstroShopeList = async (req, res) => {
   try {
-    const shopItems = await astroMallShopListing.find().sort({ createdAt: -1 }); // latest first
+    const { page = 1, limit = 10, search = "" } = req.query;
+
+    const query = {};
+
+    if (search) {
+      query.offer_name = { $regex: search, $options: "i" };
+    }
+
+    const skip = (page - 1) * limit;
+    const shopItems = await astroMallShopListing
+      .find(query)
+      .skip(skip)
+      .limit(Number(limit))
+      .sort({ createdAt: -1 });
+
+    const totalCount = await astroMallShopListing.countDocuments(query);
+
     res.status(200).json({
       message: "success",
       data: shopItems,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        totalCount: totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+      },
     });
   } catch (error) {
     console.error("Error fetching astro shop list:", error);
@@ -200,7 +222,7 @@ const postAstroShopeList = async (req, res) => {
       astroMallImg,
       cloudinary_id,
       Jewelry_product_gem,
-      detail_shop_information
+      detail_shop_information,
     });
 
     const saved = await newItem.save();
