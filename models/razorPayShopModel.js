@@ -9,6 +9,7 @@ const PaymentShopSchema = new mongoose.Schema(
     gstAmount: Number,
     adminCommission: Number,
     currency: String,
+    userName: String,
     userMobile: Number,
     astrologerName: String,
     astrologerPhone: String,

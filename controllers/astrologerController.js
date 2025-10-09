@@ -19,6 +19,8 @@ const getAllAstrologersWithWallet = async (req, res) => {
       "walletTransactions.0": { $exists: true },
     });
 
+    matchConditions.push({ deleteAstroLoger: false });
+    
     if (search) {
       matchConditions.push({
         $or: [
@@ -149,6 +151,7 @@ const getAstrologerList = async (req, res, next) => {
     // Base filter
     const filter = {
       astroStatus: statusFilter,
+      deleteAstroLoger: false,
     };
 
     // If search query is present, add regex condition

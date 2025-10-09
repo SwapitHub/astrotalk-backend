@@ -1,7 +1,9 @@
-const cloudinary = require("../config/cloudinary");
+const fs = require("fs");
+const path = require("path");
 const AddHomeBanner = require("../models/HomeBannerModel");
 
-const getHomeBanner = async (re, res) => {
+// Get all home banners
+const getHomeBanner = async (req, res) => {
   try {
     const homeBanner = await AddHomeBanner.find();
     res.json(homeBanner);
@@ -10,6 +12,7 @@ const getHomeBanner = async (re, res) => {
   }
 };
 
+// Delete home banner and its image file
 const deleteHomeBanner = async (req, res) => {
   try {
     const { cloudinary_id } = req.query;
@@ -26,8 +29,11 @@ const deleteHomeBanner = async (req, res) => {
       return res.status(404).json({ message: "Image not found" });
     }
 
-    // Delete image from Cloudinary
-    await cloudinary.uploader.destroy(cloudinary_id);
+    // Delete local image file
+    const filePath = path.join(__dirname, "..", "public", "uploads", cloudinary_id);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
 
     // Delete the banner document
     await AddHomeBanner.findByIdAndDelete(banner._id);
@@ -39,6 +45,7 @@ const deleteHomeBanner = async (req, res) => {
   }
 };
 
+// Update home banner and replace old image
 const putHomeBanner = async (req, res) => {
   try {
     const { id } = req.body;
@@ -47,13 +54,11 @@ const putHomeBanner = async (req, res) => {
       return res.status(400).json({ message: "ID is required" });
     }
 
-    // Find the existing banner
     const banner = await AddHomeBanner.findById(id);
     if (!banner) {
       return res.status(404).json({ message: "Banner not found" });
     }
 
-    // Update fields if they exist in req.body
     const {
       banner_heading,
       banner_desc,
@@ -66,10 +71,20 @@ const putHomeBanner = async (req, res) => {
     if (banner_btn_name) banner.banner_btn_name = banner_btn_name;
     if (banner_btn_link) banner.banner_btn_link = banner_btn_link;
 
-    // If new image uploaded, update it
+    // If new image uploaded
     if (req.file) {
+      // Delete old image from /public/uploads/
+      const oldImage = banner.singleImages?.cloudinary_id;
+      if (oldImage) {
+        const oldFilePath = path.join(__dirname, "..", "public", "uploads", oldImage);
+        if (fs.existsSync(oldFilePath)) {
+          fs.unlinkSync(oldFilePath);
+        }
+      }
+
+      // Set new image info
       const image = {
-        img_url: req.file.path,
+        img_url: `/public/uploads/${req.file.filename}`,
         cloudinary_id: req.file.filename,
       };
       banner.singleImages = image;
@@ -88,16 +103,17 @@ const putHomeBanner = async (req, res) => {
   }
 };
 
+// Add new home banner
 const postHomeBanner = async (req, res) => {
   try {
-    const { banner_heading, banner_desc,banner_btn_name, banner_btn_link } = req.body;
+    const { banner_heading, banner_desc, banner_btn_name, banner_btn_link } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: "Image is required" });
     }
 
     const image = {
-      img_url: req.file.path,
+      img_url: `/public/uploads/${req.file.filename}`,
       cloudinary_id: req.file.filename,
     };
 
@@ -112,7 +128,7 @@ const postHomeBanner = async (req, res) => {
     await banner.save();
 
     res.status(200).json({
-      message: "success",
+      message: "Banner created successfully",
       data: banner,
     });
   } catch (err) {
@@ -125,5 +141,5 @@ module.exports = {
   deleteHomeBanner,
   postHomeBanner,
   getHomeBanner,
-  putHomeBanner
+  putHomeBanner,
 };

@@ -1,88 +1,17 @@
+const fs = require("fs");
+const path = require("path");
 const seminarData = require("../models/seminarModel");
-const cloudinary = require("../config/cloudinary");
 
-const putSeminarFetchData = async (req, res) => {
+// ✅ Helper to delete local file
+const deleteLocalImage = (filePath) => {
   try {
-    const { id } = req.params;
-    const updateData = req.body;
-    const image = req.file;
-
-    // find existing seminar
-    const seminar = await seminarData.findById(id);
-    if (!seminar) {
-      return res.status(404).json({ error: "Seminar not found" });
-    }
-
-    // if new image uploaded, delete old one from cloudinary
-    if (image) {
-      if (seminar.image?.cloudinary_id) {
-        await cloudinary.uploader.destroy(seminar.image.cloudinary_id);
-      }
-
-      const uploadResult = await cloudinary.uploader.upload(image.path, {
-        folder: "seminars",
-      });
-
-      updateData.image = {
-        img_url: uploadResult.secure_url,
-        cloudinary_id: uploadResult.public_id,
-      };
-    }
-
-    // update in DB
-    const updatedSeminar = await seminarData.findByIdAndUpdate(
-      id,
-      { $set: updateData },
-      { new: true } 
-    );
-
-    return res.status(200).json({
-      message: "success",
-      data: updatedSeminar,
-    });
+    fs.unlinkSync(filePath);
   } catch (err) {
-    console.error("Error updating seminar data:", err);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error("Failed to delete image:", err.message);
   }
 };
 
-const deleteSeminarFetchData = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const seminar = await seminarData.findById(id);
-    if (!seminar) {
-      return res.status(404).json({ error: "Seminar not found" });
-    }
-
-    // Delete image from Cloudinary if exists
-    if (seminar.singleImages && seminar.singleImages.cloudinary_id) {
-      await cloudinary.uploader.destroy(seminar.singleImages.cloudinary_id);
-    }
-
-    await seminarData.findByIdAndDelete(id);
-
-    return res.status(200).json({ message: "success" });
-  } catch (error) {
-    console.error("Error deleting seminar:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-const getSeminarFetchData = async (req, res) => {
-  try {
-    const seminars = await seminarData.find().sort({ createdAt: -1 }); // Latest first
-    return res.status(200).json({
-      message: "Fetched seminars successfully",
-      data: seminars,
-    });
-  } catch (error) {
-    console.error("Error fetching seminar data:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-
+// ✅ CREATE Seminar
 const postSeminarFetchData = async (req, res) => {
   try {
     const {
@@ -94,9 +23,11 @@ const postSeminarFetchData = async (req, res) => {
       location_seminar,
       email,
       seminar_detail,
-      seminar_status,
+      seminar_status: rawStatus,
       seminar_link
     } = req.body;
+
+    const seminar_status = rawStatus === "true" || rawStatus === true;
 
     const image = req.file;
 
@@ -114,15 +45,8 @@ const postSeminarFetchData = async (req, res) => {
     }
 
     let img_url = "";
-    let cloudinary_id = "";
-
     if (image) {
-      const uploadResult = await cloudinary.uploader.upload(image.path, {
-        folder: "seminars",
-      });
-
-      img_url = uploadResult.secure_url;
-      cloudinary_id = uploadResult.public_id;
+      img_url = `/public/uploads/${image.filename}`;
     }
 
     const newSeminar = new seminarData({
@@ -138,7 +62,7 @@ const postSeminarFetchData = async (req, res) => {
       seminar_link,
       singleImages: {
         img_url,
-        cloudinary_id,
+        cloudinary_id: "", // remove from schema if unused
       },
     });
 
@@ -154,4 +78,90 @@ const postSeminarFetchData = async (req, res) => {
   }
 };
 
-module.exports = { postSeminarFetchData, getSeminarFetchData, deleteSeminarFetchData,putSeminarFetchData };
+
+// ✅ READ Seminars
+const getSeminarFetchData = async (req, res) => {
+  try {
+    const seminars = await seminarData.find().sort({ createdAt: -1 });
+    return res.status(200).json({
+      message: "Fetched seminars successfully",
+      data: seminars,
+    });
+  } catch (error) {
+    console.error("Error fetching seminar data:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// ✅ UPDATE Seminar
+const putSeminarFetchData = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    const image = req.file;
+
+    const seminar = await seminarData.findById(id);
+    if (!seminar) {
+      return res.status(404).json({ error: "Seminar not found" });
+    }
+
+    // ✅ Delete old local image if new one uploaded
+    if (image) {
+      if (seminar.singleImages?.img_url) {
+        const oldImagePath = path.join(__dirname, "..", seminar.singleImages.img_url);
+        deleteLocalImage(oldImagePath);
+      }
+
+      updateData.singleImages = {
+        img_url: `/public/uploads/${image.filename}`,
+        cloudinary_id: "", // Optional: remove this field from schema if not used anymore
+      };
+    }
+
+    const updatedSeminar = await seminarData.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "success",
+      data: updatedSeminar,
+    });
+  } catch (err) {
+    console.error("Error updating seminar data:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// ✅ DELETE Seminar
+const deleteSeminarFetchData = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const seminar = await seminarData.findById(id);
+    if (!seminar) {
+      return res.status(404).json({ error: "Seminar not found" });
+    }
+
+    // ✅ Delete local image if exists
+    if (seminar.singleImages?.img_url) {
+      const imagePath = path.join(__dirname, "..", seminar.singleImages.img_url);
+      deleteLocalImage(imagePath);
+    }
+
+    await seminarData.findByIdAndDelete(id);
+
+    return res.status(200).json({ message: "success" });
+  } catch (error) {
+    console.error("Error deleting seminar:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+module.exports = {
+  postSeminarFetchData,
+  getSeminarFetchData,
+  deleteSeminarFetchData,
+  putSeminarFetchData,
+};

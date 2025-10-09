@@ -318,10 +318,10 @@ const getAstroShopeProduct = async (req, res) => {
     const query = {};
 
     if (search) {
-      query.offer_name = { $regex: search, $options: "i" }; 
+      query.offer_name = { $regex: search, $options: "i" };
     }
 
-    const skip = (page - 1) * limit; 
+    const skip = (page - 1) * limit;
     const productItems = await astroMallProductListing
       .find(query)
       .skip(skip)

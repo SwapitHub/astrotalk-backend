@@ -15,6 +15,7 @@ const getAllUsersWithWallet = async (req, res) => {
     matchConditions.push({
       "walletTransactions.0": { $exists: true },
     });
+    matchConditions.push({ deleteUser: false });
 
     if (search) {
       matchConditions.push({
@@ -131,18 +132,29 @@ const getAllUsersWithWalletDetail = async (req, res) => {
 
 const getUserLogin = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; 
-    const limit = parseInt(req.query.limit) || 10; 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || ""; // search query from client
 
     const skip = (page - 1) * limit;
 
-    const totalUsers = await UserLogin.countDocuments();
+    // Base filter: only users not marked as deleted
+    const filter = { deleteUser: false };
+
+    // If search query exists, add name regex condition
+    if (search.trim() !== "") {
+      filter.name = { $regex: search.trim(), $options: "i" };
+    }
+
+    // Count total users matching filter
+    const totalUsers = await UserLogin.countDocuments(filter);
     const totalPages = Math.ceil(totalUsers / limit);
 
-    const users = await UserLogin.find()
+    // Fetch paginated users
+    const users = await UserLogin.find(filter)
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 }); // optional: sort latest first
+      .sort({ createdAt: -1 }); // latest first
 
     res.json({
       users,
@@ -160,6 +172,7 @@ const getUserLogin = async (req, res) => {
       .json({ error: "Failed to fetch paginated user login data" });
   }
 };
+
 
 const getUserLoginDetail = async (req, res) => {
   try {

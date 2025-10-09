@@ -1,6 +1,19 @@
+const fs = require("fs");
+const path = require("path");
 const astroMallShopListing = require("../models/astroMallShopListingModel");
-const cloudinary = require("../config/cloudinary");
 const mongoose = require("mongoose");
+
+// ✅ Utility: Delete image from local storage
+const deleteLocalImage = (imgPath) => {
+  try {
+    const fullPath = path.join(__dirname, "..", imgPath);
+    if (fs.existsSync(fullPath)) {
+      fs.unlinkSync(fullPath);
+    }
+  } catch (err) {
+    console.error("Failed to delete image:", err.message);
+  }
+};
 
 const getAstroShopeDetail = async (req, res) => {
   try {
@@ -38,23 +51,18 @@ const deleteAstroShope = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Step 1: Find the shop
     const product = await astroMallShopListing.findById(id);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Step 2: Delete image from Cloudinary
-    if (product.cloudinary_id) {
-      await cloudinary.uploader.destroy(product.cloudinary_id);
+    if (product.astroMallImg) {
+      deleteLocalImage(product.astroMallImg);
     }
 
-    // Step 3: Delete shop from MongoDB
     await astroMallShopListing.findByIdAndDelete(id);
 
-    return res
-      .status(200)
-      .json({ message: "shop and image deleted successfully" });
+    return res.status(200).json({ message: "Shop and image deleted successfully" });
   } catch (error) {
     console.error("Error deleting shop:", error);
     return res.status(500).json({ message: "Server error" });
@@ -80,19 +88,14 @@ const updateAstroShopeList = async (req, res) => {
       return res.status(404).json({ message: "Shop not found" });
     }
 
-    // If new image uploaded, delete old one and set new
-    let updatedImagePath = shop.astroMallImg;
-    let updatedCloudinaryId = shop.cloudinary_id;
+  let updatedImagePath = shop.astroMallImg;
 
+    // ✅ Handle new image upload
     if (req.file) {
-      // Delete old image from Cloudinary
-      if (shop.cloudinary_id) {
-        await cloudinary.uploader.destroy(shop.cloudinary_id);
+      if (shop.astroMallImg) {
+        deleteLocalImage(shop.astroMallImg); // delete old image
       }
-
-      // Set new image values
-      updatedImagePath = req.file.path;
-      updatedCloudinaryId = req.file.filename;
+      updatedImagePath = `/public/uploads/${req.file.filename}`;
     }
 
     // Update fields
@@ -107,7 +110,6 @@ const updateAstroShopeList = async (req, res) => {
         Jewelry_product_gem,
         discount_product,
         astroMallImg: updatedImagePath,
-        cloudinary_id: updatedCloudinaryId,
         detail_shop_information,
       },
       { new: true }
@@ -203,13 +205,14 @@ const postAstroShopeList = async (req, res) => {
     }
 
     const existingItem = await astroMallShopListing.findOne({ slug: slug });
+
     if (existingItem) {
       return res.status(409).json({
         message: "Slug already exists. Please choose a different one.",
       });
     }
 
-    const astroMallImg = req.file.path;
+    const astroMallImg = `/public/uploads/${req.file.filename}`;
     const cloudinary_id = req.file.filename;
 
     const newItem = new astroMallShopListing({
