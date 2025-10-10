@@ -5,7 +5,8 @@ const astroMallGemJewelrySchema = new mongoose.Schema({
   astroGemstoneJewelryImg: String,
   actual_price: String,
   cloudinary_id: String,
-  productType: String
+  productType: String,
+  deleteGemJewelry: Boolean,
 });
 
 const astroMallGemJewelryListing = mongoose.model(

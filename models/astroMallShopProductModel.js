@@ -23,6 +23,7 @@ const astroMallProductSchema = new mongoose.Schema(
     meta_description: String,
     meta_title: String,
     meta_keyword: String,
+    deleteShopProductStatus:Boolean,
     images: [
       {
         url: String,

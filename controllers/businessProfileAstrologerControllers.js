@@ -576,7 +576,8 @@ const postAstrologerProfile = async (req, res) => {
     }
 
     // Construct the full image URL
-    const imageURL = `${req.file.path}`;
+    const imagePath = req.file.path.split("public")[1];
+    const imageURL = `\\public${imagePath}`;
 
     const newBusinessProfile = new businessProfileAstrologer({
       name,
@@ -599,6 +600,8 @@ const postAstrologerProfile = async (req, res) => {
       freeChatStatus,
       requestStatus,
       completeProfile: true,
+      deleteAstroLoger: false,
+      blockUnblockAstro: false,
       cloudinary_id: req.file.filename || "",
       spiritual_services: [
         {

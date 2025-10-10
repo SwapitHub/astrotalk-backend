@@ -60,9 +60,10 @@ const deleteAstroShope = async (req, res) => {
       deleteLocalImage(product.astroMallImg);
     }
 
-    await astroMallShopListing.findByIdAndDelete(id);
+    product.deleteShopStatus = true;
+    await product.save();
 
-    return res.status(200).json({ message: "Shop and image deleted successfully" });
+    return res.status(200).json({ message: "success" });
   } catch (error) {
     console.error("Error deleting shop:", error);
     return res.status(500).json({ message: "Server error" });
@@ -88,7 +89,7 @@ const updateAstroShopeList = async (req, res) => {
       return res.status(404).json({ message: "Shop not found" });
     }
 
-  let updatedImagePath = shop.astroMallImg;
+    let updatedImagePath = shop.astroMallImg;
 
     // ✅ Handle new image upload
     if (req.file) {
@@ -111,6 +112,7 @@ const updateAstroShopeList = async (req, res) => {
         discount_product,
         astroMallImg: updatedImagePath,
         detail_shop_information,
+        deleteShopStatus: false,
       },
       { new: true }
     );
@@ -153,7 +155,9 @@ const getAstroShopeList = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "" } = req.query;
 
-    const query = {};
+    const query = {
+      deleteShopStatus: false, 
+    };
 
     if (search) {
       query.offer_name = { $regex: search, $options: "i" };
@@ -186,6 +190,7 @@ const getAstroShopeList = async (req, res) => {
     });
   }
 };
+
 
 const postAstroShopeList = async (req, res) => {
   try {
@@ -226,6 +231,7 @@ const postAstroShopeList = async (req, res) => {
       cloudinary_id,
       Jewelry_product_gem,
       detail_shop_information,
+      deleteShopStatus: false,
     });
 
     const saved = await newItem.save();

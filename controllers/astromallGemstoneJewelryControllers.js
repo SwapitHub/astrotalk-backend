@@ -43,37 +43,19 @@ const deleteAstroShopeGemstoneJewelry = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Step 2: Delete image from Cloudinary
-    if (product.astroGemstoneJewelryImg) {
-      // Remove '/public' prefix if it exists, so path.join works correctly
-      const imageRelativePath = product.astroGemstoneJewelryImg.startsWith(
-        "/public"
-      )
-        ? product.astroGemstoneJewelryImg.replace("/public", "")
-        : product.astroGemstoneJewelryImg;
+    // Step 2: Soft delete by updating flag only (no image deletion)
+    product.deleteGemJewelry = true;
+    await product.save();
 
-      const imageFullPath = path.join(
-        __dirname,
-        "../public",
-        imageRelativePath
-      );
-
-      if (fs.existsSync(imageFullPath)) {
-        fs.unlinkSync(imageFullPath);
-      }
-    }
-
-    // Step 3: Delete product from MongoDB
-    await astroMallGemJewelryListing.findByIdAndDelete(id);
-
-    return res
-      .status(200)
-      .json({ message: "Gem Product and image deleted successfully" });
+    return res.status(200).json({
+      message: "Gemstone jewelry soft deleted successfully",
+    });
   } catch (error) {
-    console.error("Error deleting product:", error);
+    console.error("Error soft deleting product:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 const updateAstroShopeGemstoneJewelry = async (req, res) => {
   try {
@@ -121,6 +103,7 @@ const updateAstroShopeGemstoneJewelry = async (req, res) => {
         productType,
         astroGemstoneJewelryImg: updatedImagePath, // ✅ correct
         cloudinary_id: updatedCloudinaryId,
+        deleteGemJewelry: false
       },
       { new: true }
     );
@@ -169,8 +152,9 @@ const getAstroShopeGemstoneJewelryDetail = async (req, res) => {
 const getAstroShopeGemstoneJewelry = async (req, res) => {
   try {
     const productItems = await astroMallGemJewelryListing
-      .find()
-      .sort({ createdAt: -1 }); // latest first
+      .find({ deleteGemJewelry: false }) // Only non-deleted items
+      .sort({ createdAt: -1 });
+
     res.status(200).json({
       message: "success",
       data: productItems,
@@ -183,6 +167,7 @@ const getAstroShopeGemstoneJewelry = async (req, res) => {
     });
   }
 };
+
 
 const postAstroShopeGemstoneJewelry = async (req, res) => {
   try {
@@ -201,6 +186,7 @@ const postAstroShopeGemstoneJewelry = async (req, res) => {
       astroGemstoneJewelryImg,
       cloudinary_id,
       productType,
+      deleteGemJewelry: false
     });
 
     const saved = await newItem.save();
