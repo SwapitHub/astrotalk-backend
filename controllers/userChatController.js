@@ -126,19 +126,13 @@ const getWalletTransactionData = async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 }); // Sort by latest transactions
 
-    // ✅ Aggregate total availableBalance across all matching documents (ignoring pagination)
-    const aggregationResult = await WalletTransaction.aggregate([
-      { $match: filter },
-      {
-        $group: {
-          _id: null,
-          totalAvailableBalance: { $sum: "$availableBalance" },
-        },
-      },
-    ]);
+    // Get the most recent available balance for the filtered transactions
+    const lastTransaction = await WalletTransaction.findOne(filter).sort({
+      createdAt: -1,
+    });
 
-    const availableBalance = aggregationResult.length > 0
-      ? aggregationResult[0].totalAvailableBalance
+    const availableBalance = lastTransaction
+      ? lastTransaction.availableBalance
       : 0;
 
     // Calculate pagination metadata

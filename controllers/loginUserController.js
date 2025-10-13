@@ -110,17 +110,10 @@ const getAllUsersWithWalletDetail = async (req, res) => {
       WalletTransaction.countDocuments(filter)
     ]);
 
-    
-    // ✅ Calculate total available balance from paginated transactions
-    const totalAvailableBalance = transactions.reduce((sum, txn) => {
-      return sum + (typeof txn.availableBalance === 'number' ? txn.availableBalance : 0);
-    }, 0);
-
     return res.status(200).json({
       message: "success",
       user,
       transactions,
-      totalAvailableBalance,
       pagination: {
         total: totalCount,
         page: Number(page),
