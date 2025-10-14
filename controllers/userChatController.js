@@ -124,23 +124,32 @@ const getWalletTransactionData = async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 }); // Sort by latest transactions
 
-    // 💰 Sum all transactionAmount values (convert from string → number)
-    const totalTransactionAmount = await WalletTransaction.aggregate([
-      {
-        $group: {
-          _id: null,
-          totalAmount: {
-            $sum: {
-              $cond: [
-                { $ne: [{ $type: "$transactionAmount" }, "missing"] },
-                { $toDouble: "$transactionAmount" },
-                0,
-              ],
+  // 💰 Calculate total sum (convert string to number safely)
+const totalTransactionAmount = await WalletTransaction.aggregate([
+  {
+    $group: {
+      _id: null,
+      totalAmount: {
+        $sum: {
+          $cond: [
+            { $ne: [{ $type: "$transactionAmount" }, "missing"] },
+            {
+              $toDouble: {
+                $replaceAll: {
+                  input: { $trim: { input: "$transactionAmount" } },
+                  find: ",",
+                  replacement: "."
+                }
+              }
             },
-          },
-        },
-      },
-    ]);
+            0
+          ]
+        }
+      }
+    }
+  }
+]);
+
 
     const totalAmount =
       totalTransactionAmount.length > 0
