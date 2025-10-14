@@ -124,15 +124,23 @@ const getWalletTransactionData = async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 }); // Sort by latest transactions
 
-    // 💰 Calculate total of all transactionAmounts (no type conversion needed now)
     const totalTransactionAmount = await WalletTransaction.aggregate([
-      { $group: { _id: null, totalAmount: { $sum: "$transactionAmount" } } },
+      { $match: { type: "admin" } }, // Filter only admin transactions
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$transactionAmount" }, // Sum transactionAmount as Number
+          count: { $sum: 1 }, // Optional: number of matched docs
+        },
+      },
     ]);
 
     const totalAmount =
       totalTransactionAmount.length > 0
         ? Number(totalTransactionAmount[0].totalAmount.toFixed(2))
         : 0;
+
+    console.log("Total transactionAmount for admin:", totalAmount);
 
     // 🧮 Get latest available balance for filtered results
     const lastTransaction = await WalletTransaction.findOne(filter).sort({
