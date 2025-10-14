@@ -11,7 +11,7 @@ const WalletTransactionSchema = new mongoose.Schema(
     astrologer_id: { type: mongoose.Schema.Types.ObjectId, ref: "Astrologer", required: false },
     availableBalance: { type: Number, required: true },
     description: { type: String, required: true },
-    transactionAmount: { type: String, required: true },
+    transactionAmount: { type: Number, required: true },
     invoice: { type: Boolean, default: false },
     action: { type: Boolean, default: false },
     astroMobile: { type: String, required: false },

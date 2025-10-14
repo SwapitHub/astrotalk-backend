@@ -124,60 +124,17 @@ const getWalletTransactionData = async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 }); // Sort by latest transactions
 
-  // 💰 Calculate total sum with smart conversion
-const totalTransactionAmount = await WalletTransaction.aggregate([
-  {
-    $addFields: {
-      // Clean transactionAmount string
-      cleanAmount: {
-        $trim: { input: "$transactionAmount" }
-      }
-    }
-  },
-  {
-    $addFields: {
-      // Try to convert to number safely
-      numericAmount: {
-        $convert: {
-          input: {
-            $replaceAll: {
-              input: "$cleanAmount",
-              find: ",",
-              replacement: "."
-            }
-          },
-          to: "double",
-          onError: 0,
-          onNull: 0
-        }
-      }
-    }
-  },
-  {
-    $group: {
-      _id: null,
-      totalAmountRaw: { $sum: "$numericAmount" },
-      avgAmount: { $avg: "$numericAmount" } // helps detect scale
-    }
-  }
-]);
+    // 💰 Calculate total of all transactionAmounts (no type conversion needed now)
+    const totalTransactionAmount = await WalletTransaction.aggregate([
+      { $group: { _id: null, totalAmount: { $sum: "$transactionAmount" } } },
+    ]);
 
-// Extract total
-let totalAmount = totalTransactionAmount.length > 0
-  ? totalTransactionAmount[0].totalAmountRaw
-  : 0;
+    const totalAmount =
+      totalTransactionAmount.length > 0
+        ? Number(totalTransactionAmount[0].totalAmount.toFixed(2))
+        : 0;
 
-// 🧮 Optional fix: If looks 10× too high, adjust automatically
-if (totalAmount > 0 && totalTransactionAmount[0].avgAmount > 100) {
-  // likely missing decimal point — adjust scale
-  totalAmount = totalAmount / 10;
-}
-
-// Round to 2 decimals
-totalAmount = Number(totalAmount.toFixed(2));
-
-
-    // 🧾 Last available balance for the filtered transactions
+    // 🧮 Get latest available balance for filtered results
     const lastTransaction = await WalletTransaction.findOne(filter).sort({
       createdAt: -1,
     });
@@ -186,7 +143,7 @@ totalAmount = Number(totalAmount.toFixed(2));
       ? lastTransaction.availableBalance
       : 0;
 
-    // 📄 Pagination info
+    // 📑 Pagination data
     const hasNextPage = skip + transactions.length < totalTransactions;
     const hasPrevPage = page > 1;
 
