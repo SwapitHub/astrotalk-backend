@@ -1,7 +1,6 @@
 const WalletTransaction = require("../models/transactionsUserModel");
 const Chat = require("../models/userChatModels");
 
-
 const getTransactionData = async (req, res) => {
   try {
     const { query } = req.params;
@@ -76,7 +75,7 @@ const getTransactionData = async (req, res) => {
     console.error("Failed to fetch transactions:", error);
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
-}
+};
 
 const getWalletTransactionData = async (req, res) => {
   try {
@@ -104,8 +103,7 @@ const getWalletTransactionData = async (req, res) => {
       filter.user_id = user_id; // Add user_id filter if provided
     }
 
-
-     // 🔍 Add search filter
+    // 🔍 Add search filter
     if (search && search.trim() !== "") {
       const searchRegex = new RegExp(search, "i");
 
@@ -113,7 +111,7 @@ const getWalletTransactionData = async (req, res) => {
         { name: searchRegex },
         { userName: searchRegex },
         { description: searchRegex },
-        { astroMobile: searchRegex }, 
+        { astroMobile: searchRegex },
       ];
     }
 
@@ -126,27 +124,30 @@ const getWalletTransactionData = async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 }); // Sort by latest transactions
 
-
-     // Calculate the total transactionAmount across all transactions (no filter)
+    // 💰 Sum all transactionAmount values (convert from string → number)
     const totalTransactionAmount = await WalletTransaction.aggregate([
       {
         $group: {
           _id: null,
-          totalAmount: { 
-            $sum: { 
-              $toDouble: "$transactionAmount"  // Convert transactionAmount (string) to number
-            }
-          }
+          totalAmount: {
+            $sum: {
+              $cond: [
+                { $ne: [{ $type: "$transactionAmount" }, "missing"] },
+                { $toDouble: "$transactionAmount" },
+                0,
+              ],
+            },
+          },
         },
       },
     ]);
 
-    // If no transactions, totalAmount should be 0
-    const totalAmount = totalTransactionAmount.length > 0 
-      ? totalTransactionAmount[0].totalAmount 
-      : 0;
+    const totalAmount =
+      totalTransactionAmount.length > 0
+        ? Number(totalTransactionAmount[0].totalAmount.toFixed(2))
+        : 0;
 
-    // Get the most recent available balance for the filtered transactions
+    // 🧾 Last available balance for the filtered transactions
     const lastTransaction = await WalletTransaction.findOne(filter).sort({
       createdAt: -1,
     });
@@ -155,7 +156,7 @@ const getWalletTransactionData = async (req, res) => {
       ? lastTransaction.availableBalance
       : 0;
 
-    // Calculate pagination metadata
+    // 📄 Pagination info
     const hasNextPage = skip + transactions.length < totalTransactions;
     const hasPrevPage = page > 1;
 
@@ -165,16 +166,16 @@ const getWalletTransactionData = async (req, res) => {
       totalTransactions,
       hasNextPage,
       hasPrevPage,
-      availableBalance, 
+      availableBalance,
       transactions,
-      totalAmount
+      totalAmount,
     });
   } catch (err) {
     res
       .status(500)
       .json({ message: err.message || "Error fetching Wallet Transactions" });
   }
-}
+};
 
 const getDetailData = async (req, res) => {
   try {
@@ -193,12 +194,10 @@ const getDetailData = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch chat details" });
   }
-}
-
-
+};
 
 module.exports = {
-    getTransactionData,
-    getWalletTransactionData,
-    getDetailData
-}
+  getTransactionData,
+  getWalletTransactionData,
+  getDetailData,
+};
