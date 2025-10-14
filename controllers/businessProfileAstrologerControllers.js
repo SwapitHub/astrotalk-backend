@@ -574,7 +574,15 @@ const postAstrologerProfile = async (req, res) => {
         .status(400)
         .json({ error: "All fields including the image are required" });
     }
-
+    // 🔍 Check if mobile number already exists
+    const existingAstrologer = await businessProfileAstrologer.findOne({
+      mobileNumber,
+    });
+    if (existingAstrologer) {
+      return res
+        .status(400)
+        .json({ error: "Mobile number already registered" });
+    }
     // Construct the full image URL
     const imagePath = req.file.path.split("public")[1];
     const imageURL = `\\public${imagePath}`;
@@ -623,6 +631,10 @@ const postAstrologerProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Error uploading business profile:", error);
+     // Handle Mongo duplicate key error
+    if (error.code === 11000 && error.keyPattern && error.keyPattern.mobileNumber) {
+      return res.status(400).json({ error: "Mobile number already exists" });
+    }
     res.status(500).json({ error: "Failed to add businessProfile" });
   }
 };
