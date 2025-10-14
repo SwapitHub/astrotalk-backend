@@ -9,6 +9,7 @@ const AddBlogsSchema = new mongoose.Schema(
     author: { type: String, default: "Admin" },
     coverImage: { type: String },
     cloudinary_id: String,
+    deleteStatus: Boolean,
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
