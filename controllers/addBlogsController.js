@@ -1,5 +1,6 @@
 const AddBlogs = require("../models/addBlogsModel");
-const cloudinary = require("../config/cloudinary");
+const path = require("path");
+const fs = require("fs");
 
 // ✅ POST: Create a new blog
 const handlePostAddBlogs = async (req, res) => {
@@ -43,7 +44,7 @@ const handlePostAddBlogs = async (req, res) => {
 
 const handleGetAllAddBlogs = async (req, res) => {
   try {
-    const filters = { deleteStatus: false };
+    const filters = {deleteStatus: false};
 
     // Category & author filters
     if (req.query.category) filters.category = req.query.category;
@@ -113,14 +114,13 @@ const handleGetDetailAddBlogs = async (req, res) => {
   }
 };
 
-// ✅ PUT: Update blog by ID (remove old image from local storage if new image uploaded)
+// ✅ PUT: Update blog by ID
 const handlePutAddBlogs = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, slug, shortDescription, content, author, category } =
-      req.body;
+    const { title, slug, shortDescription, content, author, category } = req.body;
 
-    // Find existing blog
+    // Find existing blog by ID
     const existingBlog = await AddBlogs.findById(id);
     if (!existingBlog) {
       return res.status(404).json({ error: "Blog not found" });
@@ -143,31 +143,27 @@ const handlePutAddBlogs = async (req, res) => {
     }
 
     let updatedCoverImage = existingBlog.coverImage;
+console.log(updatedCoverImage,"updatedCoverImage");
 
-    // If new image uploaded
+    // ✅ If a new image is uploaded
     if (req.file) {
-      // Delete old image file from /public/uploads (if exists)
+      // Delete old image if it exists
       if (existingBlog.coverImage) {
-        const oldImagePath = path.join(
-          __dirname,
-          "..",
-          existingBlog.coverImage
-        );
+        const oldImagePath = path.join(__dirname, "..", existingBlog.coverImage);
         if (fs.existsSync(oldImagePath)) {
           fs.unlinkSync(oldImagePath);
         }
       }
 
-      // Construct new image path to store in DB
+      // Save new image path
       const imagePath = req.file.path.split("public")[1]; // "/uploads/filename.jpg"
       updatedCoverImage = `/public${imagePath.replace(/\\/g, "/")}`; // "/public/uploads/filename.jpg"
     }
 
-    // Update blog fields
+    // Update fields
     existingBlog.title = title || existingBlog.title;
     existingBlog.slug = updatedSlug;
-    existingBlog.shortDescription =
-      shortDescription || existingBlog.shortDescription;
+    existingBlog.shortDescription = shortDescription || existingBlog.shortDescription;
     existingBlog.content = content || existingBlog.content;
     existingBlog.author = author || existingBlog.author;
     existingBlog.coverImage = updatedCoverImage;
@@ -187,6 +183,7 @@ const handlePutAddBlogs = async (req, res) => {
     });
   }
 };
+
 // ✅ DELETE: Delete blog by ID
 
 const handleDeleteAddBlogs = async (req, res) => {
