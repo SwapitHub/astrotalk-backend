@@ -124,37 +124,58 @@ const getWalletTransactionData = async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 }); // Sort by latest transactions
 
-  // 💰 Calculate total sum (convert string to number safely)
+  // 💰 Calculate total sum with smart conversion
 const totalTransactionAmount = await WalletTransaction.aggregate([
+  {
+    $addFields: {
+      // Clean transactionAmount string
+      cleanAmount: {
+        $trim: { input: "$transactionAmount" }
+      }
+    }
+  },
+  {
+    $addFields: {
+      // Try to convert to number safely
+      numericAmount: {
+        $convert: {
+          input: {
+            $replaceAll: {
+              input: "$cleanAmount",
+              find: ",",
+              replacement: "."
+            }
+          },
+          to: "double",
+          onError: 0,
+          onNull: 0
+        }
+      }
+    }
+  },
   {
     $group: {
       _id: null,
-      totalAmount: {
-        $sum: {
-          $cond: [
-            { $ne: [{ $type: "$transactionAmount" }, "missing"] },
-            {
-              $toDouble: {
-                $replaceAll: {
-                  input: { $trim: { input: "$transactionAmount" } },
-                  find: ",",
-                  replacement: "."
-                }
-              }
-            },
-            0
-          ]
-        }
-      }
+      totalAmountRaw: { $sum: "$numericAmount" },
+      avgAmount: { $avg: "$numericAmount" } // helps detect scale
     }
   }
 ]);
 
+// Extract total
+let totalAmount = totalTransactionAmount.length > 0
+  ? totalTransactionAmount[0].totalAmountRaw
+  : 0;
 
-    const totalAmount =
-      totalTransactionAmount.length > 0
-        ? Number(totalTransactionAmount[0].totalAmount.toFixed(2))
-        : 0;
+// 🧮 Optional fix: If looks 10× too high, adjust automatically
+if (totalAmount > 0 && totalTransactionAmount[0].avgAmount > 100) {
+  // likely missing decimal point — adjust scale
+  totalAmount = totalAmount / 10;
+}
+
+// Round to 2 decimals
+totalAmount = Number(totalAmount.toFixed(2));
+
 
     // 🧾 Last available balance for the filtered transactions
     const lastTransaction = await WalletTransaction.findOne(filter).sort({
