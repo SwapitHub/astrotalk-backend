@@ -127,21 +127,22 @@ const getWalletTransactionData = async (req, res) => {
       .sort({ createdAt: -1 }); // Sort by latest transactions
 
 
- // Calculate the total transactionAmount (sum of all transactionAmount values)
+    // Calculate the total transactionAmount across all transactions (no filter)
     const totalTransactionAmount = await WalletTransaction.aggregate([
-      { $match: filter }, // Match the same filter
       {
         $group: {
           _id: null,
-          totalAmount: { $sum: { $toDouble: "$transactionAmount" } }, // Convert transactionAmount to number and sum
+          totalAmount: { $sum: { $toDouble: "$transactionAmount" } }, // Sum all transactionAmounts
         },
       },
     ]);
 
-    const totalAmount = totalTransactionAmount.length > 0 ? totalTransactionAmount[0].totalAmount:0
+    // If no transactions, totalAmount should be 0
+    const totalAmount = totalTransactionAmount.length > 0 
+      ? totalTransactionAmount[0].totalAmount 
+      : 0;
 
-
-      // Get the most recent available balance for the filtered transactions
+    // Get the most recent available balance for the filtered transactions
     const lastTransaction = await WalletTransaction.findOne(filter).sort({
       createdAt: -1,
     });
