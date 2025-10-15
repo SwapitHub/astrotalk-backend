@@ -221,6 +221,8 @@ const postRazorpayShopOrder = async (req, res) => {
       addresses: addressData,
       product_order_status: false,
       product_order_complete: false,
+      product_cancel_order: false,
+      product_cancel_order_reason: "",
       product_type_gem,
     });
 
