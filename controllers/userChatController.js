@@ -3,29 +3,35 @@ const Chat = require("../models/userChatModels");
 
 const getTransactionData = async (req, res) => {
   try {
-    const { query } = req.params;
-    let { page, limit } = req.query;
-
-    // Basic input validation
-    if (!query || typeof query !== "string") {
-      return res.status(400).json({ error: "Invalid astroMobile number" });
-    }
+    const { query } = req.params; // This is astroMobile
+    let { page, limit, search } = req.query;
 
     page = parseInt(page) || 1;
     limit = parseInt(limit) || 10;
     const skip = (page - 1) * limit;
 
-    const totalTransactions = await WalletTransaction.countDocuments({
+    // Build dynamic filter
+    const filter = {
       astroMobile: query,
-    });
+    };
 
-    const transactions = await WalletTransaction.find({ astroMobile: query })
+    // Add case-insensitive userName search if provided
+    if (search) {
+      filter.userName = { $regex: search, $options: "i" };
+    }
+
+    // Count total matching transactions
+    const totalTransactions = await WalletTransaction.countDocuments(filter);
+
+    // Fetch paginated transactions
+    const transactions = await WalletTransaction.find(filter)
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
 
+    // Aggregate total balance based on the same filter
     const totalBalanceResult = await WalletTransaction.aggregate([
-      { $match: { astroMobile: query } },
+      { $match: filter },
       {
         $group: {
           _id: null,
@@ -52,6 +58,7 @@ const getTransactionData = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 };
+
 
 
 const getWalletTransactionData = async (req, res) => {
