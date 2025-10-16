@@ -6,54 +6,30 @@ const getTransactionData = async (req, res) => {
     const { query } = req.params;
     let { page, limit } = req.query;
 
+    // Basic input validation
+    if (!query || typeof query !== "string") {
+      return res.status(400).json({ error: "Invalid astroMobile number" });
+    }
+
     page = parseInt(page) || 1;
     limit = parseInt(limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Fetch total count of transactions
     const totalTransactions = await WalletTransaction.countDocuments({
       astroMobile: query,
     });
 
-    // Fetch paginated transactions
     const transactions = await WalletTransaction.find({ astroMobile: query })
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    // ✅ Calculate total available balance from transactionAmount
     const totalBalanceResult = await WalletTransaction.aggregate([
       { $match: { astroMobile: query } },
       {
         $group: {
           _id: null,
-          totalAvailableBalance: {
-            $sum: {
-              $toDouble: {
-                $trim: {
-                  input: {
-                    $replaceAll: {
-                      input: {
-                        $replaceAll: {
-                          input: {
-                            $replaceAll: {
-                              input: "$transactionAmount",
-                              find: "₹",
-                              replacement: "",
-                            },
-                          },
-                          find: "+",
-                          replacement: "",
-                        },
-                      },
-                      find: " ",
-                      replacement: "",
-                    },
-                  },
-                },
-              },
-            },
-          },
+          totalAvailableBalance: { $sum: "$transactionAmount" },
         },
       },
     ]);
@@ -76,6 +52,7 @@ const getTransactionData = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 };
+
 
 const getWalletTransactionData = async (req, res) => {
   try {
