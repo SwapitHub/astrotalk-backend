@@ -401,6 +401,8 @@ const putAstrologerProfileUpdate = async (req, res) => {
       Description,
       country,
       gender,
+      aadhaarCard,
+      certificate,
     } = req.body;
 
     // Prepare update object
@@ -420,6 +422,8 @@ const putAstrologerProfileUpdate = async (req, res) => {
 
     if (experience) updateData.experience = experience;
     if (charges) updateData.charges = charges;
+    if (aadhaarCard) updateData.aadhaarCard = aadhaarCard;
+    if (certificate) updateData.certificate = certificate;
     if (Description?.trim()) updateData.Description = Description.trim();
     if (country?.trim()) updateData.country = country.trim();
     if (gender?.trim()) updateData.gender = gender.trim();
@@ -548,6 +552,8 @@ const postAstrologerProfile = async (req, res) => {
       offers,
       freeChatStatus,
       requestStatus,
+      aadhaarCard,
+      certificate,
     } = req.body;
 
     // Parse JSON strings if sent that way
@@ -568,7 +574,9 @@ const postAstrologerProfile = async (req, res) => {
       profileStatus === undefined ||
       chatStatus === undefined ||
       !country ||
-      !gender
+      !gender ||
+      !certificate ||
+      !aadhaarCard
     ) {
       return res
         .status(400)
@@ -605,6 +613,8 @@ const postAstrologerProfile = async (req, res) => {
       starRating,
       orders,
       offers,
+      certificate,
+      aadhaarCard,
       freeChatStatus,
       requestStatus,
       completeProfile: true,
@@ -631,8 +641,12 @@ const postAstrologerProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Error uploading business profile:", error);
-     // Handle Mongo duplicate key error
-    if (error.code === 11000 && error.keyPattern && error.keyPattern.mobileNumber) {
+    // Handle Mongo duplicate key error
+    if (
+      error.code === 11000 &&
+      error.keyPattern &&
+      error.keyPattern.mobileNumber
+    ) {
       return res.status(400).json({ error: "Mobile number already exists" });
     }
     res.status(500).json({ error: "Failed to add businessProfile" });

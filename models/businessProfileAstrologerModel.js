@@ -37,6 +37,8 @@ const businessProfileAstrologerSchema = new mongoose.Schema(
     deleteAstroLoger: Boolean,
     cloudinary_id: String,
     totalAvailableBalance: Number,
+    aadhaarCard:String,
+    certificate: String,
   },
   { timestamps: true }
 );
