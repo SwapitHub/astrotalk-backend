@@ -59,6 +59,8 @@ const allowedOrigins = [
   "https://astrotalk-front-end.vercel.app",
   "http://72.60.101.71:3000",
   "https://astro.weddingbyte.com",
+  "http://astromani.com",
+  "https://astromani.com",
   "http://localhost:3000",
 ];
 
