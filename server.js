@@ -55,8 +55,7 @@ app.use("/public", express.static("public"));
 
 
 const server = http.createServer(app);
-const allowedOrigins = [
-  "https://astrotalk-front-end.vercel.app",
+const allowedOrigins = [  
   "http://72.60.101.71:3000",
   "http://72.60.101.71:3001",
   "https://astro.weddingbyte.com",
