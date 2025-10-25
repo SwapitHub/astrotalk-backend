@@ -55,14 +55,11 @@ app.use("/public", express.static("public"));
 
 
 const server = http.createServer(app);
-const allowedOrigins = [  
+const allowedOrigins = [
+  "https://astrotalk-front-end.vercel.app",
   "http://72.60.101.71:3000",
-  "http://72.60.101.71:3001",
   "https://astro.weddingbyte.com",
-  "http://astromani.com",
-  "https://astromani.com",
   "http://localhost:3000",
-  "http://localhost:3001",
 ];
 
 app.use(
@@ -159,4 +156,3 @@ socketVoiceCall(io);
 server.listen(PORT, "0.0.0.0", () =>
   console.log(`Server running on port ${PORT}`)
 );
-
