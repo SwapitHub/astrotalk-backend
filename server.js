@@ -56,13 +56,9 @@ app.use("/public", express.static("public"));
 
 const server = http.createServer(app);
 const allowedOrigins = [  
-  "http://72.60.101.71:3000",
-  "http://72.60.101.71:3001",
+  "http://72.60.101.71:3000",  
   "https://astro.weddingbyte.com",
-  "http://astromani.com",
-  "https://astromani.com",
-  "http://localhost:3000",
-  "http://localhost:3001",
+  "http://localhost:3000",  
 ];
 
 app.use(
