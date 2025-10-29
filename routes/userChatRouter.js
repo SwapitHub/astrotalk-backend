@@ -100,8 +100,8 @@ async function socketIoMessage(io) {
           type: "user",
           user_id: chatTimeLeftData.userId,
           availableBalance: chatTimeLeftData.userAvailableBalance - amount,
-          description: `Chat with astrologer: ${chatTimeLeftData.astrologerName} for ${chatTimeLeftData.totalChatTime} seconds`,
-          transactionAmount: `${amount}`,
+          description: `Chat with ${chatTimeLeftData.astrologerName} for ${chatTimeLeftData.totalChatTime} seconds`,
+          transactionAmount: `- ₹ ${amount}`,
           invoice: true,
           action: true,
           name: chatTimeLeftData.username,
@@ -120,18 +120,12 @@ async function socketIoMessage(io) {
             : 0;
           const newBalance = previousBalance + astrologerEarnings;
 
-          await businessProfileAstrologer.updateOne(
-            { _id: chatTimeLeftData.astrologerId },
-            { $set: { totalAvailableBalance: newBalance } }
-          );
-
-
           const astrologerTransaction = new WalletTransaction({
             type: "astrologer",
             astrologer_id: chatTimeLeftData.astrologerId,
             availableBalance: newBalance,
-            description: `Earnings from chat with user: ${chatTimeLeftData.username}`,
-            transactionAmount: `${astrologerEarnings}`,
+            description: `Earnings from chat with ${chatTimeLeftData.username}`,
+            transactionAmount: `+ ₹ ${astrologerEarnings}`,
             invoice: true,
             action: true,
             astroMobile: chatTimeLeftData.astroMobile,
@@ -156,8 +150,8 @@ async function socketIoMessage(io) {
           const adminTransaction = new WalletTransaction({
             type: "admin",
             availableBalance: newBalance,
-            description: `Chat with astrologer: ${chatTimeLeftData.astrologerName} and user: ${chatTimeLeftData.username} for ${chatTimeLeftData.totalChatTime} seconds`,
-            transactionAmount: `${adminCommission}`,
+            description: `Chat with ${chatTimeLeftData.astrologerName} and ${chatTimeLeftData.username} for ${chatTimeLeftData.totalChatTime} seconds`,
+            transactionAmount: `+ ₹ ${adminCommission}`,
             invoice: true,
             action: true,
             name: "Admin",
